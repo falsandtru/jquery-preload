@@ -214,6 +214,7 @@
                     case event.pageX !== setting.points[ 0 ].pageX || event.pageY !== setting.points[ 0 ].pageY:
                       break ;
                     default:
+                      setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
                       Store.loaded[ url.replace( /#.*/, '' ) ] = true ;
                       ++setting.volume ;
                       setting.timestamp = event.timeStamp ;

@@ -231,7 +231,7 @@
                               switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                                 case 'click':
                                   jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
-                                  if ( jQuery( event.currentTarget ).is( ':visible' ) ) {
+                                  if ( jQuery( document ).find( event.currentTarget )[0] ) {
                                     jQuery( document )
                                     .unbind( setting.nss.click )
                                     .one( setting.nss.click, function ( event ) {
@@ -271,7 +271,7 @@
                           switch ( jQuery.data( target, setting.nss.data ) ) {
                             case 'click':
                               jQuery( target ).removeData( setting.nss.data ) ;
-                              if ( jQuery( target ).is( ':visible' ) ) {
+                              if ( jQuery( document ).find( target )[0] ) {
                                 jQuery( document )
                                 .unbind( setting.nss.click )
                                 .one( setting.nss.click, function ( event ) {

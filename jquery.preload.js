@@ -5,8 +5,8 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.0.1
- * @updated 2014/02/21
+ * @version 0.0.2
+ * @updated 2014/02/22
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
  * ---
@@ -290,7 +290,6 @@
                         error: function () {
                           Store.fire( setting.ajax.error, this, arguments ) ;
                           
-                          Store.loaded[ this.url.replace( /#.*/, '' ) ] = false ;
                           setting.volume -= Number( !!setting.volume ) ;
                           jQuery.removeData( target, setting.nss.data ) ;
                         }

@@ -63,7 +63,7 @@
         cooldown: 10000,
         query: null,
         fix: false,
-        ajax: { async: true, timeout: 2000 }
+        ajax: { async: true, timeout: 1500 }
       },
       option
     ) ;

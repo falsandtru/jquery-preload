@@ -58,6 +58,7 @@
         link: 'a:not([target])',
         filter: function(){ return /(\/|\.html?|\.php)([#?].*)?$/.test( this.href ); },
         lock: 700,
+        relay: null,
         interval: 1000,
         limit: 2,
         cooldown: 10000,
@@ -231,17 +232,21 @@
                             setTimeout( function () {
                               switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                                 case 'click':
-                                  setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
-                                  jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
-                                  if ( jQuery( document ).find( event.currentTarget )[0] ) {
-                                    jQuery( document )
-                                    .unbind( setting.nss.click )
-                                    .one( setting.nss.click, function ( event ) {
-                                      if ( !event.isDefaultPrevented() ) {
-                                        window.location.href = target.href ;
-                                      }
-                                    } ) ;
-                                    jQuery( event.currentTarget ).click();
+                                  if ( !setting.relay || false === Store.fire( setting.relay, null, [ url, setting.xhr ] ) ) {
+                                    setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
+                                    jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
+                                    if ( jQuery( document ).find( event.currentTarget )[0] ) {
+                                      jQuery( document )
+                                      .unbind( setting.nss.click )
+                                      .one( setting.nss.click, function ( event ) {
+                                        if ( !event.isDefaultPrevented() ) {
+                                          window.location.href = target.href ;
+                                        }
+                                      } ) ;
+                                      jQuery( event.currentTarget ).click();
+                                    }
+                                  } else {
+                                    jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                                   }
                                   break ;
                                 case 'lock':
@@ -288,7 +293,7 @@
                           jQuery.removeData( target, setting.nss.data ) ;
                         }
                       } ) ;
-                      jQuery.ajax( ajax ) ;
+                      setting.xhr = jQuery.ajax( ajax ) ;
                   }
                 }, 30 ) ;
                 queue.push( id ) ;

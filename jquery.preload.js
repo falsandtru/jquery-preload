@@ -257,14 +257,6 @@
                       
                       var ajax = jQuery.extend( true, {}, setting.ajax, {
                         url: url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( setting.query ? ( url.match( /\?/ ) ? '&' : '?' ) + setting.query : '' ) + '$2' ),
-                        beforeSend: function () {
-                          if ( setting.xhr && setting.xhr.readyState < 4 ) {
-                            setting.xhr.abort() ;
-                            Store.loaded[ url.replace( /#.*/, '' ) ] = false ;
-                          }
-                          setting.xhr = arguments[ 0 ] ;
-                          Store.fire( setting.ajax.beforeSend, this, arguments ) ;
-                        },
                         success: function () {
                           Store.fire( setting.ajax.success, this, arguments ) ;
                           

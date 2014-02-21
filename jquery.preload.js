@@ -290,7 +290,6 @@
                         error: function () {
                           Store.fire( setting.ajax.error, this, arguments ) ;
                           
-                          Store.loaded[ this.url.replace( /#.*/, '' ) ] = false ;
                           setting.volume -= Number( !!setting.volume ) ;
                           jQuery.removeData( target, setting.nss.data ) ;
                         }

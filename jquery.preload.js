@@ -230,6 +230,7 @@
                             setTimeout( function () {
                               switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                                 case 'click':
+                                  setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
                                   jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
                                   if ( jQuery( document ).find( event.currentTarget )[0] ) {
                                     jQuery( document )

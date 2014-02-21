@@ -4,8 +4,8 @@
  * 
  * ---
  * @Copyright(c) 2014, falsandtru
- * @license MIT  http://opensource.org/licenses/mit-license.php  http://sourceforge.jp/projects/opensource/wiki/licenses%2FMIT_license
- * @version 0.0.0
+ * @license MIT http://opensource.org/licenses/mit-license.php
+ * @version 0.0.1
  * @updated 2014/02/21
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide

@@ -240,7 +240,7 @@
                       setTimeout( function () {
                         switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                           case 'click':
-                            if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr ] ) ) {
+                            if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
                               setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
                               jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
                               if ( jQuery( document ).find( event.currentTarget )[0] ) {

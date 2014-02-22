@@ -57,7 +57,7 @@
         ns: undefined,
         link: 'a:not([target])',
         filter: function(){ return /(\/|\.html?|\.php)([#?].*)?$/.test( this.href ); },
-        lock: 700,
+        lock: 1000,
         relay: null,
         interval: 1000,
         limit: 2,

@@ -5,7 +5,7 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.0.3
+ * @version 0.0.4
  * @updated 2014/02/22
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
@@ -173,104 +173,77 @@
         event.timeStamp = ( new Date() ).getTime() ;
         setting.points.unshift( event ) ;
         setting.points.splice( 10, 1 ) ;
-        if ( setting.target ) {
-          ( function ( setting, event, target, drive ) {
-            var url, queue, id ;
-            url = setting.fix ? Store.canonicalizeURL( target.href ) : target.href ;
-            queue = setting.queue ;
+        Store.check( setting, event, setting.target ) ;
+      } ) ;
+      
+      setTimeout( function () {
+        setting.volume -= Number( !!setting.volume ) ;
+        setTimeout( arguments.callee, setting.cooldown ) ;
+      }, setting.cooldown ) ;
+    },
+    check: function ( setting, event, target, drive ) {
+      var url, queue, id ;
+      if ( !target ) { return ; }
+      url = setting.fix ? Store.canonicalizeURL( target.href ) : target.href ;
+      queue = setting.queue ;
+      switch ( true ) {
+        case !Store.settings[ setting.id ]:
+        case Store.loaded[ url.replace( /#.*/, '' ) ]:
+        case queue.length > 100:
+        case setting.interval ? ( new Date() ).getTime() - setting.timestamp < setting.interval : 0:
+        case setting.volume >= setting.limit:
+        case setting.target !== target:
+        case setting.target.protocol !== target.protocol:
+        case setting.target.host !== target.host:
+        case jQuery( target ).is( '[target="_blank"]' ):
+        case !( function ( points ) {
+                if ( points.length < 3 ) { return false ; }
+                var speed1, time1, speed2, time2 ;
+                time1 = points[ 0 ].timeStamp - points[ 1 ].timeStamp ;
+                speed1 = Math.pow( points[ 0 ].pageX - points[ 1 ].pageX, 2 ) + Math.pow( points[ 0 ].pageY - points[ 1 ].pageY, 2 ) / ( time1 || 1 ) ;
+                time2 = points[ 1 ].timeStamp - points[ 2 ].timeStamp ;
+                speed2 = Math.pow( points[ 1 ].pageX - points[ 2 ].pageX, 2 ) + Math.pow( points[ 1 ].pageY - points[ 2 ].pageY, 2 ) / ( time2 || 1 ) ;
+                switch ( true ) {
+                  case time1 > 100 || time2 > 100:
+                    return false ;
+                  case speed1 < speed2 + Math.pow( 5, 2 ) && speed1 <= Math.pow( 25, 2 ):
+                    return true ;
+                  default:
+                    return false ;
+                }
+              } )( setting.points ):
+          break ;
+        default:
+          while ( id = queue.shift() ) { clearTimeout( id ) ; }
+          id = setTimeout( function () {
+            while ( id = queue.shift() ) { clearTimeout( id ) ; }
             switch ( true ) {
-              case !Store.settings[ setting.id ]:
-              case Store.loaded[ url.replace( /#.*/, '' ) ]:
-              case queue.length > 100:
-              case setting.interval ? ( new Date() ).getTime() - setting.timestamp < setting.interval : 0:
-              case setting.volume >= setting.limit:
-              case setting.target !== target:
-              case setting.target.protocol !== target.protocol:
-              case setting.target.host !== target.host:
-              case jQuery( target ).is( '[target="_blank"]' ):
-              case !( function ( points ) {
-                      if ( points.length < 3 ) { return false ; }
-                      var speed1, time1, speed2, time2 ;
-                      time1 = points[ 0 ].timeStamp - points[ 1 ].timeStamp ;
-                      speed1 = Math.pow( points[ 0 ].pageX - points[ 1 ].pageX, 2 ) + Math.pow( points[ 0 ].pageY - points[ 1 ].pageY, 2 ) / ( time1 || 1 ) ;
-                      time2 = points[ 1 ].timeStamp - points[ 2 ].timeStamp ;
-                      speed2 = Math.pow( points[ 1 ].pageX - points[ 2 ].pageX, 2 ) + Math.pow( points[ 1 ].pageY - points[ 2 ].pageY, 2 ) / ( time2 || 1 ) ;
-                      switch ( true ) {
-                        case time1 > 100 || time2 > 100:
-                          return false ;
-                        case speed1 < speed2 + Math.pow( 5, 2 ) && speed1 <= Math.pow( 25, 2 ):
-                          return true ;
-                        default:
-                          return false ;
-                      }
-                    } )( setting.points ):
+              case !setting.target:
+              case event !== setting.points[ 0 ]:
+              case event.pageX !== setting.points[ 0 ].pageX || event.pageY !== setting.points[ 0 ].pageY:
                 break ;
               default:
-                while ( id = queue.shift() ) { clearTimeout( id ) ; }
-                id = setTimeout( function () {
-                  while ( id = queue.shift() ) { clearTimeout( id ) ; }
-                  switch ( true ) {
-                    case !setting.target:
-                    case event !== setting.points[ 0 ]:
-                    case event.pageX !== setting.points[ 0 ].pageX || event.pageY !== setting.points[ 0 ].pageY:
-                      break ;
-                    default:
-                      setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
-                      Store.loaded[ url.replace( /#.*/, '' ) ] = true ;
-                      ++setting.volume ;
-                      setting.timestamp = event.timeStamp ;
-                      
-                      if ( setting.lock ) {
-                        jQuery.data( setting.target, setting.nss.data, 'lock' ) ;
-                        jQuery( setting.target )
-                        .unbind( setting.nss.click )
-                        .one( setting.nss.click, event.timeStamp, function ( event ) {
-                          var $context = jQuery( this ) ;
-                          var timer = Math.max( setting.lock - ( new Date() ).getTime() + event.data, 0 ) ;
-                          if ( timer ) {
-                            jQuery.data( target, setting.nss.data, 'click' ) ;
-                            setTimeout( function () {
-                              switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
-                                case 'click':
-                                  if ( !setting.relay || false === Store.fire( setting.relay, null, [ url, setting.xhr ] ) ) {
-                                    setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
-                                    jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
-                                    if ( jQuery( document ).find( event.currentTarget )[0] ) {
-                                      jQuery( document )
-                                      .unbind( setting.nss.click )
-                                      .one( setting.nss.click, function ( event ) {
-                                        if ( !event.isDefaultPrevented() ) {
-                                          window.location.href = target.href ;
-                                        }
-                                      } ) ;
-                                      jQuery( event.currentTarget ).click();
-                                    }
-                                  } else {
-                                    jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-                                  }
-                                  break ;
-                                case 'lock':
-                                default:
-                                  jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-                              }
-                            }, timer ) ;
-                            event.preventDefault() ;
-                            event.stopPropagation() ;
-                          }
-                        } ) ;
-                      }
-                      
-                      var ajax = jQuery.extend( true, {}, setting.ajax, {
-                        url: url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( setting.query ? ( url.match( /\?/ ) ? '&' : '?' ) + setting.query : '' ) + '$2' ),
-                        success: function () {
-                          Store.fire( setting.ajax.success, this, arguments ) ;
-                          
-                          Store.loaded[ this.url.replace( /#.*/, '' ) ] = true ;
-                          setting.volume -= Number( arguments[ 2 ].status === 304 && !!setting.volume ) ;
-                          switch ( jQuery.data( target, setting.nss.data ) ) {
-                            case 'click':
-                              jQuery( target ).removeData( setting.nss.data ) ;
-                              if ( jQuery( document ).find( target )[0] ) {
+                setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
+                Store.loaded[ url.replace( /#.*/, '' ) ] = true ;
+                ++setting.volume ;
+                setting.timestamp = event.timeStamp ;
+                
+                if ( setting.lock ) {
+                  jQuery.data( setting.target, setting.nss.data, 'lock' ) ;
+                  jQuery( setting.target )
+                  .unbind( setting.nss.click )
+                  .one( setting.nss.click, event.timeStamp, function ( event ) {
+                    var $context = jQuery( this ) ;
+                    var timer = Math.max( setting.lock - ( new Date() ).getTime() + event.data, 0 ) ;
+                    if ( timer ) {
+                      jQuery.data( target, setting.nss.data, 'click' ) ;
+                      setTimeout( function () {
+                        switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
+                          case 'click':
+                            if ( !setting.relay || false === Store.fire( setting.relay, null, [ url, setting.xhr ] ) ) {
+                              setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
+                              jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
+                              if ( jQuery( document ).find( event.currentTarget )[0] ) {
                                 jQuery( document )
                                 .unbind( setting.nss.click )
                                 .one( setting.nss.click, function ( event ) {
@@ -278,34 +251,61 @@
                                     window.location.href = target.href ;
                                   }
                                 } ) ;
-                                jQuery( target ).click();
+                                jQuery( event.currentTarget ).click();
                               }
-                              break ;
-                            case 'lock':
-                            default:
-                              jQuery.removeData( target, setting.nss.data ) ;
-                          }
-                        },
-                        error: function () {
-                          Store.fire( setting.ajax.error, this, arguments ) ;
-                          
-                          setting.volume -= Number( !!setting.volume ) ;
-                          jQuery.removeData( target, setting.nss.data ) ;
+                            } else {
+                              jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+                            }
+                            break ;
+                          case 'lock':
+                          default:
+                            jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                         }
-                      } ) ;
-                      setting.xhr = jQuery.ajax( ajax ) ;
+                      }, timer ) ;
+                      event.preventDefault() ;
+                      event.stopPropagation() ;
+                    }
+                  } ) ;
+                }
+                
+                var ajax = jQuery.extend( true, {}, setting.ajax, {
+                  url: url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( setting.query ? ( url.match( /\?/ ) ? '&' : '?' ) + setting.query : '' ) + '$2' ),
+                  success: function () {
+                    Store.fire( setting.ajax.success, this, arguments ) ;
+                    
+                    Store.loaded[ this.url.replace( /#.*/, '' ) ] = true ;
+                    setting.volume -= Number( arguments[ 2 ].status === 304 && !!setting.volume ) ;
+                    switch ( jQuery.data( target, setting.nss.data ) ) {
+                      case 'click':
+                        jQuery( target ).removeData( setting.nss.data ) ;
+                        if ( jQuery( document ).find( target )[0] ) {
+                          jQuery( document )
+                          .unbind( setting.nss.click )
+                          .one( setting.nss.click, function ( event ) {
+                            if ( !event.isDefaultPrevented() ) {
+                              window.location.href = target.href ;
+                            }
+                          } ) ;
+                          jQuery( target ).click();
+                        }
+                        break ;
+                      case 'lock':
+                      default:
+                        jQuery.removeData( target, setting.nss.data ) ;
+                    }
+                  },
+                  error: function () {
+                    Store.fire( setting.ajax.error, this, arguments ) ;
+                    
+                    setting.volume -= Number( !!setting.volume ) ;
+                    jQuery.removeData( target, setting.nss.data ) ;
                   }
-                }, 30 ) ;
-                queue.push( id ) ;
+                } ) ;
+                setting.xhr = jQuery.ajax( ajax ) ;
             }
-          } )( setting, event, setting.target ) ;
-        }
-      } ) ;
-      
-      setTimeout( function () {
-        setting.volume -= Number( !!setting.volume ) ;
-        setTimeout( arguments.callee, setting.cooldown ) ;
-      }, setting.cooldown ) ;
+          }, 30 ) ;
+          queue.push( id ) ;
+      }
     },
     canonicalizeURL: function ( url ) {
       var ret ;
@@ -318,7 +318,7 @@
       // Unify to UTF-8 encoded values
       ret = encodeURI( decodeURI( ret ) ) ;
       // Fix case
-      ret = ret.replace( /(?:%\w+)+/g, function ( str ) {
+      ret = ret.replace( /(?:%\w{2})+/g, function ( str ) {
         return url.match( str.toLowerCase() ) || str ;
       } ) ;
       return ret ;

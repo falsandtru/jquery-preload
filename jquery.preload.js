@@ -154,11 +154,13 @@
         event.timeStamp = ( new Date() ).getTime() ;
         switch ( jQuery.data( this, setting.nss.data ) ) {
           case 'preload':
+            var url = setting.fix ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
             if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
-              Store.noforward( setting, event ) ;
+              Store.delayClick( setting, event ) ;
             } else {
               jQuery.removeData( event.currentTarget, setting.nss.data ) ;
             }
+            event.preventDefault() ;
             break ;
           case undefined:
             jQuery.removeData( event.currentTarget, setting.nss.data ) ;
@@ -169,7 +171,7 @@
             break ;
           case 'click':
           case 'lock':
-          case 'forward':
+          case 'delay':
           default:
         }
       } )
@@ -260,20 +262,19 @@
                         switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                           case 'click':
                             if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
-                              Store.noforward( setting, event ) ;
+                              Store.delayClick( setting, event ) ;
                             } else {
                               jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                             }
                             break ;
                           case 'lock':
-                          case 'forward':
+                          case 'delay':
                           case 'preload':
                           default:
                             jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                         }
                       }, timer ) ;
                       event.preventDefault() ;
-                      event.stopPropagation() ;
                     }
                   } ) ;
                 }
@@ -300,7 +301,7 @@
                         }
                         break ;
                       case 'lock':
-                      case 'forward':
+                      case 'delay':
                       case 'preload':
                       default:
                         jQuery.removeData( target, setting.nss.data ) ;
@@ -319,7 +320,7 @@
           queue.push( id ) ;
       }
     },
-    noforward: function ( setting, event ) {
+    delayClick: function ( setting, event ) {
       setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
       jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
       if ( jQuery( document ).find( event.currentTarget )[0] ) {
@@ -330,7 +331,7 @@
             window.location.href = target.href ;
           }
         } ) ;
-        jQuery.data( event.currentTarget, setting.nss.data, 'forward' ) ;
+        jQuery.data( event.currentTarget, setting.nss.data, 'delay' ) ;
         jQuery( event.currentTarget ).click() ;
       }
     },

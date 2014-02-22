@@ -5,7 +5,7 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.0.2
+ * @version 0.0.3
  * @updated 2014/02/22
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
@@ -58,12 +58,13 @@
         link: 'a:not([target])',
         filter: function(){ return /(\/|\.html?|\.php)([#?].*)?$/.test( this.href ); },
         lock: 1000,
+        relay: null,
         interval: 1000,
         limit: 2,
         cooldown: 10000,
         query: null,
         fix: false,
-        ajax: { async: true, timeout: 2000 }
+        ajax: { async: true, timeout: 1500 }
       },
       option
     ) ;
@@ -214,6 +215,7 @@
                     case event.pageX !== setting.points[ 0 ].pageX || event.pageY !== setting.points[ 0 ].pageY:
                       break ;
                     default:
+                      setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
                       Store.loaded[ url.replace( /#.*/, '' ) ] = true ;
                       ++setting.volume ;
                       setting.timestamp = event.timeStamp ;
@@ -230,16 +232,21 @@
                             setTimeout( function () {
                               switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                                 case 'click':
-                                  jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
-                                  if ( jQuery( document ).find( event.currentTarget )[0] ) {
-                                    jQuery( document )
-                                    .unbind( setting.nss.click )
-                                    .one( setting.nss.click, function ( event ) {
-                                      if ( !event.isDefaultPrevented() ) {
-                                        window.location.href = target.href ;
-                                      }
-                                    } ) ;
-                                    jQuery( event.currentTarget ).click();
+                                  if ( !setting.relay || false === Store.fire( setting.relay, null, [ url, setting.xhr ] ) ) {
+                                    setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
+                                    jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
+                                    if ( jQuery( document ).find( event.currentTarget )[0] ) {
+                                      jQuery( document )
+                                      .unbind( setting.nss.click )
+                                      .one( setting.nss.click, function ( event ) {
+                                        if ( !event.isDefaultPrevented() ) {
+                                          window.location.href = target.href ;
+                                        }
+                                      } ) ;
+                                      jQuery( event.currentTarget ).click();
+                                    }
+                                  } else {
+                                    jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                                   }
                                   break ;
                                 case 'lock':
@@ -255,14 +262,6 @@
                       
                       var ajax = jQuery.extend( true, {}, setting.ajax, {
                         url: url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( setting.query ? ( url.match( /\?/ ) ? '&' : '?' ) + setting.query : '' ) + '$2' ),
-                        beforeSend: function () {
-                          if ( setting.xhr && setting.xhr.readyState < 4 ) {
-                            setting.xhr.abort() ;
-                            Store.loaded[ url.replace( /#.*/, '' ) ] = false ;
-                          }
-                          setting.xhr = arguments[ 0 ] ;
-                          Store.fire( setting.ajax.beforeSend, this, arguments ) ;
-                        },
                         success: function () {
                           Store.fire( setting.ajax.success, this, arguments ) ;
                           
@@ -294,7 +293,7 @@
                           jQuery.removeData( target, setting.nss.data ) ;
                         }
                       } ) ;
-                      jQuery.ajax( ajax ) ;
+                      setting.xhr = jQuery.ajax( ajax ) ;
                   }
                 }, 30 ) ;
                 queue.push( id ) ;
@@ -313,16 +312,14 @@
       // Trim
       ret = Store.trim( url ) ;
       // Remove string starting with an invalid character
-      ret = url.replace( /[<>"{}|\\^\[\]`\s].*/,'' ) ;
-      // Parse
-      ret = jQuery( '<a/>', { href: url } )[ 0 ].href ;
+      ret = ret.replace( /[<>"{}|\\^\[\]`\s].*/,'' ) ;
       // Deny value beginning with the string of HTTP (S) other than
-      ret = /^https?:/i.test( url ) ? url : '' ;
+      ret = /^https?:/i.test( ret ) ? ret : jQuery( '<a/>', { href: ret } )[0].href ;
       // Unify to UTF-8 encoded values
-      ret = encodeURI( decodeURI( url ) ) ;
+      ret = encodeURI( decodeURI( ret ) ) ;
       // Fix case
-      ret = ret.replace( /(?:%\w+)+/g, function () {
-        return url.match( arguments[ 0 ].toLowerCase() ) || arguments[ 0 ] ;
+      ret = ret.replace( /(?:%\w+)+/g, function ( str ) {
+        return url.match( str.toLowerCase() ) || str ;
       } ) ;
       return ret ;
     },

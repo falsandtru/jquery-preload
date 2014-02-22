@@ -5,7 +5,7 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.1.1
+ * @version 0.1.2
  * @updated 2014/02/23
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
@@ -284,7 +284,6 @@
                 }
                 
                 var ajax = jQuery.extend( true, {}, setting.ajax, {
-                  url: url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( setting.query ? ( url.match( /\?/ ) ? '&' : '?' ) + setting.query : '' ) + '$2' ),
                   success: function () {
                     Store.fire( setting.ajax.success, this, arguments ) ;
                     
@@ -302,6 +301,12 @@
                     jQuery.removeData( target, setting.nss.data ) ;
                   }
                 } ) ;
+                var query = setting.query ;
+                if ( query ) {
+                  query = query.split( '=' ) ;
+                  query = encodeURIComponent( query[ 0 ] ) + ( query.length > 0 ? '=' + encodeURIComponent( query[ 1 ] ) : '' ) ;
+                }
+                ajax.url = url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( query ? ( url.match( /\?/ ) ? '&' : '?' ) + query : '' ) + '$2' ) ;
                 setting.xhr = jQuery.ajax( ajax ) ;
             }
           }, 30 ) ;

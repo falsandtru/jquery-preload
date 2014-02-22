@@ -152,27 +152,42 @@
         var setting = Store.settings[ event.data ] ;
         
         event.timeStamp = ( new Date() ).getTime() ;
-        switch ( jQuery.data( this, setting.nss.data ) ) {
+        if ( setting.fix ) { this.href = Store.canonicalizeURL( this.href ) ; }
+        switch ( !event.isDefaultPrevented() && jQuery.data( event.currentTarget, setting.nss.data ) ) {
           case 'preload':
-            var url = setting.fix ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
-            if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
-              Store.delayClick( setting, event ) ;
-            } else {
-              jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-            }
-            event.preventDefault() ;
-            break ;
-          case undefined:
-            jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-            setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
-            if ( setting.fix ) {
-              this.href = Store.canonicalizeURL( this.href ) ;
-            }
-            break ;
-          case 'click':
           case 'lock':
-          case 'delay':
+            if ( setting.forward ) {
+              // forward
+              var url = setting.fix ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
+              if ( false === Store.fire( setting.forward, null, [ event, setting.xhr, setting.timeStamp ] ) ) {
+                // forward fail
+                if ( 'lock' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
+                  // lock
+                  event.preventDefault() ;
+                } else {
+                  // preload
+                  Store.click( setting, event )
+                  jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+                }
+              } else {
+                // forward success
+                event.preventDefault() ;
+                jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+              }
+            } else {
+              // not forward
+              if ( 'lock' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
+                // lock
+                event.preventDefault() ;
+              } else {
+                // preload
+                Store.click( setting, event )
+                jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+              }
+            }
+            break ;
           default:
+            setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
         }
       } )
       .unbind( setting.nss.mouseover )
@@ -203,7 +218,7 @@
     check: function ( setting, event, target, drive ) {
       var url, queue, id ;
       if ( !target ) { return ; }
-      url = setting.fix ? Store.canonicalizeURL( target.href ) : target.href ;
+      url = setting.fix ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
       queue = setting.queue ;
       switch ( true ) {
         case !Store.settings[ setting.id ]:
@@ -245,36 +260,25 @@
                 setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
                 Store.loaded[ url.replace( /#.*/, '' ) ] = true ;
                 ++setting.volume ;
-                setting.timestamp = event.timeStamp ;
+                setting.timeStamp = event.timeStamp ;
                 
                 jQuery.data( setting.target, setting.nss.data, 'preload' ) ;
                 if ( setting.lock ) {
                   jQuery.data( setting.target, setting.nss.data, 'lock' ) ;
                   jQuery( setting.target )
-                  .unbind( setting.nss.click )
                   .one( setting.nss.click, event.timeStamp, function ( event ) {
-                    // Behavior when using the lock
-                    var $context = jQuery( this ) ;
-                    var timer = Math.max( setting.lock - ( new Date() ).getTime() + event.data, 0 ) ;
-                    if ( timer ) {
-                      jQuery.data( target, setting.nss.data, 'click' ) ;
-                      setTimeout( function () {
-                        switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
-                          case 'click':
-                            if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
-                              Store.delayClick( setting, event ) ;
-                            } else {
-                              jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-                            }
-                            break ;
-                          case 'lock':
-                          case 'delay':
-                          case 'preload':
-                          default:
-                            jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-                        }
-                      }, timer ) ;
-                      event.preventDefault() ;
+                    if ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
+                      // Behavior when using the lock
+                      var $context = jQuery( this ) ;
+                      var timer = Math.max( setting.lock - ( new Date() ).getTime() + event.data, 0 ) ;
+                      jQuery.data( event.currentTarget, setting.nss.data, 'click' ) ;
+                      if ( timer ) {
+                        setTimeout( function () {
+                          'click' === jQuery.data( event.currentTarget, setting.nss.data ) && Store.click( setting, event ) ;
+                          jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+                        }, timer ) ;
+                        event.preventDefault() ;
+                      }
                     }
                   } ) ;
                 }
@@ -286,26 +290,10 @@
                     
                     Store.loaded[ this.url.replace( /#.*/, '' ) ] = true ;
                     setting.volume -= Number( arguments[ 2 ].status === 304 && !!setting.volume ) ;
-                    switch ( jQuery.data( target, setting.nss.data ) ) {
-                      case 'click':
-                        jQuery( target ).removeData( setting.nss.data ) ;
-                        if ( jQuery( document ).find( target )[0] ) {
-                          jQuery( document )
-                          .unbind( setting.nss.click )
-                          .one( setting.nss.click, function ( event ) {
-                            if ( !event.isDefaultPrevented() ) {
-                              window.location.href = target.href ;
-                            }
-                          } ) ;
-                          jQuery( target ).click();
-                        }
-                        break ;
-                      case 'lock':
-                      case 'delay':
-                      case 'preload':
-                      default:
-                        jQuery.removeData( target, setting.nss.data ) ;
+                    if ( 'click' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
+                      Store.click( setting, event ) ;
                     }
+                    jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                   },
                   error: function () {
                     Store.fire( setting.ajax.error, this, arguments ) ;
@@ -320,7 +308,8 @@
           queue.push( id ) ;
       }
     },
-    delayClick: function ( setting, event ) {
+    click: function ( setting, event ) {
+      var target = event.currentTarget ;
       setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
       jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
       if ( jQuery( document ).find( event.currentTarget )[0] ) {
@@ -328,12 +317,12 @@
         .unbind( setting.nss.click )
         .one( setting.nss.click, function ( event ) {
           if ( !event.isDefaultPrevented() ) {
-            window.location.href = target.href ;
+            window.location.href = setting.fix ? Store.canonicalizeURL( target.href ) : target.href ;
           }
         } ) ;
-        jQuery.data( event.currentTarget, setting.nss.data, 'delay' ) ;
         jQuery( event.currentTarget ).click() ;
       }
+      event.preventDefault() ;
     },
     canonicalizeURL: function ( url ) {
       var ret ;

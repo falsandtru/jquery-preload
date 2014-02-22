@@ -148,12 +148,29 @@
       $context.find( setting.link ).filter( setting.filter )
       .unbind( setting.nss.click )
       .one( setting.nss.click, setting.id, function( event ) {
+        // Behavior when not using the lock
         var setting = Store.settings[ event.data ] ;
-        if ( !jQuery.data( this, setting.nss.data ) ) {
-          setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
-          if ( setting.fix ) {
-            this.href = Store.canonicalizeURL( this.href ) ;
-          }
+        
+        event.timeStamp = ( new Date() ).getTime() ;
+        switch ( jQuery.data( this, setting.nss.data ) ) {
+          case 'preload':
+            if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
+              Store.noforward( setting, event ) ;
+            } else {
+              jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+            }
+            break ;
+          case undefined:
+            jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+            setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
+            if ( setting.fix ) {
+              this.href = Store.canonicalizeURL( this.href ) ;
+            }
+            break ;
+          case 'click':
+          case 'lock':
+          case 'forward':
+          default:
         }
       } )
       .unbind( setting.nss.mouseover )
@@ -228,11 +245,13 @@
                 ++setting.volume ;
                 setting.timestamp = event.timeStamp ;
                 
+                jQuery.data( setting.target, setting.nss.data, 'preload' ) ;
                 if ( setting.lock ) {
                   jQuery.data( setting.target, setting.nss.data, 'lock' ) ;
                   jQuery( setting.target )
                   .unbind( setting.nss.click )
                   .one( setting.nss.click, event.timeStamp, function ( event ) {
+                    // Behavior when using the lock
                     var $context = jQuery( this ) ;
                     var timer = Math.max( setting.lock - ( new Date() ).getTime() + event.data, 0 ) ;
                     if ( timer ) {
@@ -241,23 +260,14 @@
                         switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                           case 'click':
                             if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr, event.timeStamp ] ) ) {
-                              setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
-                              jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
-                              if ( jQuery( document ).find( event.currentTarget )[0] ) {
-                                jQuery( document )
-                                .unbind( setting.nss.click )
-                                .one( setting.nss.click, function ( event ) {
-                                  if ( !event.isDefaultPrevented() ) {
-                                    window.location.href = target.href ;
-                                  }
-                                } ) ;
-                                jQuery( event.currentTarget ).click();
-                              }
+                              Store.noforward( setting, event ) ;
                             } else {
                               jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                             }
                             break ;
                           case 'lock':
+                          case 'forward':
+                          case 'preload':
                           default:
                             jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                         }
@@ -290,6 +300,8 @@
                         }
                         break ;
                       case 'lock':
+                      case 'forward':
+                      case 'preload':
                       default:
                         jQuery.removeData( target, setting.nss.data ) ;
                     }
@@ -305,6 +317,21 @@
             }
           }, 30 ) ;
           queue.push( id ) ;
+      }
+    },
+    noforward: function ( setting, event ) {
+      setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
+      jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
+      if ( jQuery( document ).find( event.currentTarget )[0] ) {
+        jQuery( document )
+        .unbind( setting.nss.click )
+        .one( setting.nss.click, function ( event ) {
+          if ( !event.isDefaultPrevented() ) {
+            window.location.href = target.href ;
+          }
+        } ) ;
+        jQuery.data( event.currentTarget, setting.nss.data, 'forward' ) ;
+        jQuery( event.currentTarget ).click() ;
       }
     },
     canonicalizeURL: function ( url ) {

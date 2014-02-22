@@ -64,7 +64,7 @@
         cooldown: 10000,
         query: null,
         fix: false,
-        ajax: { async: true, timeout: 1500 }
+        ajax: { dataType: 'text', async: true, timeout: 1500 }
       },
       option
     ) ;

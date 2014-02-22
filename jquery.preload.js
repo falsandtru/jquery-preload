@@ -58,7 +58,7 @@
         link: 'a:not([target])',
         filter: function(){ return /(\/|\.html?|\.php)([#?].*)?$/.test( this.href ); },
         lock: 1000,
-        relay: null,
+        forward: null,
         interval: 1000,
         limit: 2,
         cooldown: 10000,
@@ -240,7 +240,7 @@
                       setTimeout( function () {
                         switch ( jQuery.data( event.currentTarget, setting.nss.data ) ) {
                           case 'click':
-                            if ( !setting.relay || false === Store.fire( setting.relay, null, [ url, setting.xhr ] ) ) {
+                            if ( !setting.forward || false === Store.fire( setting.forward, null, [ url, setting.xhr ] ) ) {
                               setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort() ;
                               jQuery( event.currentTarget ).removeData( setting.nss.data ) ;
                               if ( jQuery( document ).find( event.currentTarget )[0] ) {

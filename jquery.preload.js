@@ -64,6 +64,7 @@
         cooldown: 10000,
         query: null,
         encode: false,
+        prefetch: null, //'link[rel~="dns-prefetch"], link[rel~="icon"], link[rel~="stylesheet"], script[src], .prefetch:lt(3)',
         ajax: { dataType: 'text', async: true, timeout: 1500 }
       },
       option
@@ -132,6 +133,7 @@
       }
       return $context ;
     },
+    req: {},
     loaded: {},
     registrate: function ( jQuery, window, document, undefined, Store, setting ) {
       
@@ -214,6 +216,12 @@
         setting.volume -= Number( !!setting.volume ) ;
         setTimeout( arguments.callee, setting.cooldown ) ;
       }, setting.cooldown ) ;
+      
+      setting.prefetch &&
+      jQuery( setting.prefetch )
+      .each( function () {
+        Store.prefetch.call( this ) ;
+      } ) ;
     },
     check: function ( setting, event, target, drive ) {
       var url, queue, id ;
@@ -288,9 +296,33 @@
                     Store.fire( setting.ajax.success, this, arguments ) ;
                     
                     Store.loaded[ this.url.replace( /#.*/, '' ) ] = true ;
+                    for ( var i in Store.req ) {
+                      var xhr = Store.req[ i ] ;
+                      if ( xhr && xhr.readyState < 4 ) {
+                        xhr.abort() ;
+                        Store.req[ i ] = null ;
+                      }
+                    }
                     setting.volume -= Number( arguments[ 2 ].status === 304 && !!setting.volume ) ;
                     if ( 'click' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
                       Store.click( setting, event ) ;
+                    } else {
+                      var ajax, prefetch ;
+                      if ( setting.prefetch ) {
+                        ajax = {
+                          async: true,
+                          dataType: 'text',
+                          success: function () {
+                            Store.loaded[ this.url ] = true ;
+                            Store.req[ url ] = null ;
+                          }
+                        } ;
+                        prefetch = jQuery( arguments[ 0 ] ) ;
+                        prefetch.filter( setting.prefetch ).add( prefetch.find( setting.prefetch ) )
+                        .each( function () {
+                          Store.prefetch.call( this, ajax ) ;
+                        } ) ;
+                      }
                     }
                     jQuery.removeData( event.currentTarget, setting.nss.data ) ;
                   },
@@ -328,6 +360,25 @@
         jQuery( event.currentTarget ).click() ;
       }
       event.preventDefault() ;
+    },
+    prefetch: function ( ajax ) {
+      var url ;
+      switch ( this.tagName.toLowerCase() ) {
+        case 'link':
+          url = this.href ;
+          break ;
+        case 'script':
+        case 'img':
+        case 'iframe':
+          url = this.src ;
+          break ;
+      }
+      if ( !ajax ) {
+        Store.loaded[ url ] = true ;
+      } else if ( url && !Store.loaded[ url ] ) {
+        ajax.url = url ;
+        Store.req[ url ] = jQuery.ajax( ajax ) ;
+      }
     },
     canonicalizeURL: function ( url ) {
       var ret ;

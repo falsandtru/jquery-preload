@@ -63,7 +63,7 @@
         limit: 2,
         cooldown: 10000,
         query: null,
-        fix: false,
+        encode: false,
         ajax: { dataType: 'text', async: true, timeout: 1500 }
       },
       option
@@ -142,7 +142,7 @@
       Store.ids.push( setting.id ) ;
       Store.settings[ setting.id ] = setting ;
       
-      var url = setting.fix ? Store.canonicalizeURL( window.location.href ) : window.location.href ;
+      var url = setting.encode ? Store.canonicalizeURL( window.location.href ) : window.location.href ;
       Store.loaded[ url.replace( /#.*/, '' ) ] = true ;
       
       $context.find( setting.link ).filter( setting.filter )
@@ -152,13 +152,13 @@
         var setting = Store.settings[ event.data ] ;
         
         event.timeStamp = ( new Date() ).getTime() ;
-        if ( setting.fix ) { this.href = Store.canonicalizeURL( this.href ) ; }
+        if ( setting.encode ) { this.href = Store.canonicalizeURL( this.href ) ; }
         switch ( !event.isDefaultPrevented() && jQuery.data( event.currentTarget, setting.nss.data ) ) {
           case 'preload':
           case 'lock':
             if ( setting.forward ) {
               // forward
-              var url = setting.fix ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
+              var url = setting.encode ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
               if ( false === Store.fire( setting.forward, null, [ event, setting.xhr, setting.timeStamp ] ) ) {
                 // forward fail
                 if ( 'lock' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
@@ -218,7 +218,7 @@
     check: function ( setting, event, target, drive ) {
       var url, queue, id ;
       if ( !target ) { return ; }
-      url = setting.fix ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
+      url = setting.encode ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
       queue = setting.queue ;
       switch ( true ) {
         case !Store.settings[ setting.id ]:
@@ -322,7 +322,7 @@
         .unbind( setting.nss.click )
         .one( setting.nss.click, function ( event ) {
           if ( !event.isDefaultPrevented() ) {
-            window.location.href = setting.fix ? Store.canonicalizeURL( target.href ) : target.href ;
+            window.location.href = setting.encode ? Store.canonicalizeURL( target.href ) : target.href ;
           }
         } ) ;
         jQuery( event.currentTarget ).click() ;

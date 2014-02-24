@@ -85,6 +85,7 @@
           event: setting.nss.array.join( '.' ),
           data: setting.nss.array.join( '-' ),
           class4html: setting.nss.array.join( '-' ),
+          cmd: [ 'cmd' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
           click: [ 'click' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
           mousemove: [ 'mousemove' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
           mouseover: [ 'mouseover' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
@@ -212,10 +213,20 @@
         Store.check( setting, event, setting.target ) ;
       } ) ;
       
-      setTimeout( function () {
-        setting.volume -= Number( !!setting.volume ) ;
-        setTimeout( arguments.callee, setting.cooldown ) ;
-      }, setting.cooldown ) ;
+      jQuery( document )
+      .trigger( setting.nss.cmd )
+      .one( setting.nss.cmd, setting.id, function( event ) {
+        Store.settings[ event.data ] = undefined ;
+      } ) ;
+      
+      ( function ( id, wait ) {
+        setTimeout( function () {
+          if ( setting = Store.settings[ id ] ) {
+            setting.volume -= Number( !!setting.volume ) ;
+            setTimeout( arguments.callee, wait ) ;
+          }
+        }, wait ) ;
+      } )( setting.id, setting.cooldown ) ;
       
       setting.prefetch &&
       jQuery( setting.prefetch )

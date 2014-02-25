@@ -90,11 +90,15 @@
           click: [ 'click' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
           mousemove: [ 'mousemove' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
           mouseover: [ 'mouseover' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
-          mouseout: [ 'mouseout' ].concat( setting.nss.array.join( ':' ) ).join( '.' )
+          mouseout: [ 'mouseout' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
+          touchstart: [ 'touchstart' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
+          touchmove: [ 'touchmove' ].concat( setting.nss.array.join( ':' ) ).join( '.' ),
+          touchend: [ 'touchend' ].concat( setting.nss.array.join( ':' ) ).join( '.' )
         },
         target: null,
         volume: 0,
         points: [],
+        touch: false,
         queue: [],
         xhr: null,
         timestamp: 0,
@@ -156,13 +160,13 @@
         var setting = Store.settings[ event.data ] ;
         
         event.timeStamp = ( new Date() ).getTime() ;
-        if ( setting.encode ) { this.href = Store.canonicalizeURL( this.href ) ; }
+        if ( setting.encode ) { 'href' in this ? this.href = Store.getURL( setting, this ) : this.src = Store.getURL( setting, this ) ; }
         switch ( !event.isDefaultPrevented() && jQuery.data( event.currentTarget, setting.nss.data ) ) {
           case 'preload':
           case 'lock':
             if ( setting.forward ) {
               // forward
-              var url = setting.encode ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
+              var url = Store.getURL( setting, event.currentTarget ) ;
               if ( false === Store.fire( setting.forward, null, [ event, setting.xhr, setting.timeStamp ] ) ) {
                 // forward fail
                 if ( 'lock' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
@@ -212,7 +216,28 @@
         setting.points.unshift( event ) ;
         setting.points.splice( 10, 1 ) ;
         Store.check( setting, event, setting.target ) ;
-      } ) ;
+      } )/*
+      .unbind( setting.nss.touchstart )
+      .bind( setting.nss.touchstart, setting.id, function( event ) {
+        var setting = Store.settings[ event.data ] ;
+        
+        if ( event.originalEvent.touches.length !== 1 ) { return ; }
+        event.timeStamp = ( new Date() ).getTime() ;console.log(event.originalEvent.changedTouches.length);
+        setting.touch = true ;
+
+        setTimeout( function(){
+          if ( setting.touch && !jQuery.data( event.currentTarget, setting.nss.data ) ) {
+            jQuery.data( event.currentTarget, setting.nss.data, 'preload' ) ;
+            Store.preload( setting, event ) ;
+          }
+        }, 500) ;
+      } )
+      .unbind( setting.nss.touchmove )
+      .bind( setting.nss.touchmove, setting.id, function( event ) {
+        var setting = Store.settings[ event.data ] ;
+        
+        setting.touch = false ;
+      } )*/ ;
       
       jQuery( document )
       .trigger( setting.nss.cmd )
@@ -238,7 +263,7 @@
     check: function ( setting, event, target, drive ) {
       var url, queue, id ;
       if ( !target ) { return ; }
-      url = setting.encode ? Store.canonicalizeURL( event.currentTarget.href ) : event.currentTarget.href ;
+      url = Store.getURL( setting, event.currentTarget ) ;
       queue = setting.queue ;
       switch ( true ) {
         case !Store.settings[ setting.id ]:
@@ -282,7 +307,8 @@
                 ++setting.volume ;
                 setting.timeStamp = event.timeStamp ;
                 
-                jQuery.data( setting.target, setting.nss.data, 'preload' ) ;
+                jQuery.data( target, setting.nss.data, 'preload' ) ;
+                
                 if ( setting.lock ) {
                   jQuery.data( setting.target, setting.nss.data, 'lock' ) ;
                   jQuery( setting.target )
@@ -303,59 +329,63 @@
                   } ) ;
                 }
                 
-                var ajax = jQuery.extend( true, {}, setting.ajax, {
-                  success: function () {
-                    Store.fire( setting.ajax.success, this, arguments ) ;
-                    
-                    Store.loaded[ this.url.replace( /#.*/, '' ) ] = true ;
-                    for ( var i in Store.req ) {
-                      var xhr = Store.req[ i ] ;
-                      if ( xhr && xhr.readyState < 4 ) {
-                        xhr.abort() ;
-                        Store.req[ i ] = null ;
-                      }
-                    }
-                    setting.volume -= Number( arguments[ 2 ].status === 304 && !!setting.volume ) ;
-                    if ( 'click' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
-                      Store.click( setting, event ) ;
-                    } else {
-                      var ajax, prefetch ;
-                      if ( setting.prefetch ) {
-                        ajax = {
-                          async: true,
-                          dataType: 'text',
-                          success: function () {
-                            Store.loaded[ this.url ] = true ;
-                            Store.req[ url ] = null ;
-                          }
-                        } ;
-                        prefetch = jQuery( arguments[ 0 ] ) ;
-                        prefetch.filter( setting.prefetch ).add( prefetch.find( setting.prefetch ) )
-                        .each( function () {
-                          Store.prefetch.call( this, ajax ) ;
-                        } ) ;
-                      }
-                    }
-                    jQuery.removeData( event.currentTarget, setting.nss.data ) ;
-                  },
-                  error: function () {
-                    Store.fire( setting.ajax.error, this, arguments ) ;
-                    
-                    setting.volume -= Number( !!setting.volume ) ;
-                    jQuery.removeData( target, setting.nss.data ) ;
-                  }
-                } ) ;
-                var query = setting.query ;
-                if ( query ) {
-                  query = query.split( '=' ) ;
-                  query = encodeURIComponent( query[ 0 ] ) + ( query.length > 0 ? '=' + encodeURIComponent( query[ 1 ] ) : '' ) ;
-                }
-                ajax.url = url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( query ? ( url.match( /\?/ ) ? '&' : '?' ) + query : '' ) + '$2' ) ;
-                setting.xhr = jQuery.ajax( ajax ) ;
+                Store.preload( setting, event );
             }
           }, 30 ) ;
           queue.push( id ) ;
       }
+    },
+    preload: function ( setting, event ) {
+      var ajax = jQuery.extend( true, {}, setting.ajax, {
+        success: function () {
+          Store.fire( setting.ajax.success, this, arguments ) ;
+          
+          Store.loaded[ this.url.replace( /#.*/, '' ) ] = true ;
+          for ( var i in Store.req ) {
+            var xhr = Store.req[ i ] ;
+            if ( xhr && xhr.readyState < 4 ) {
+              xhr.abort() ;
+              Store.req[ i ] = null ;
+            }
+          }
+          setting.volume -= Number( arguments[ 2 ].status === 304 && !!setting.volume ) ;
+          if ( 'click' === jQuery.data( event.currentTarget, setting.nss.data ) ) {
+            Store.click( setting, event ) ;
+          } else {
+            var ajax, prefetch ;
+            if ( setting.prefetch ) {
+              ajax = {
+                async: true,
+                dataType: 'text',
+                success: function () {
+                  Store.loaded[ this.url ] = true ;
+                  Store.req[ url ] = null ;
+                }
+              } ;
+              prefetch = jQuery( arguments[ 0 ] ) ;
+              prefetch.filter( setting.prefetch ).add( prefetch.find( setting.prefetch ) )
+              .each( function () {
+                Store.prefetch.call( this, setting, ajax ) ;
+              } ) ;
+            }
+          }
+          jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+        },
+        error: function () {
+          Store.fire( setting.ajax.error, this, arguments ) ;
+          
+          setting.volume -= Number( !!setting.volume ) ;
+          jQuery.removeData( event.currentTarget, setting.nss.data ) ;
+        }
+      } ) ;
+      var query = setting.query ;
+      if ( query ) {
+        query = query.split( '=' ) ;
+        query = encodeURIComponent( query[ 0 ] ) + ( query.length > 0 ? '=' + encodeURIComponent( query[ 1 ] ) : '' ) ;
+      }
+      var url = Store.getURL( setting, event.currentTarget ) ;
+      ajax.url = url.replace( /([^#]+)(#[^\s]*)?$/, '$1' + ( query ? ( url.match( /\?/ ) ? '&' : '?' ) + query : '' ) + '$2' ) ;
+      setting.xhr = jQuery.ajax( ajax ) ;
     },
     click: function ( setting, event ) {
       var target = event.currentTarget ;
@@ -367,30 +397,37 @@
         .one( setting.nss.click, function ( event ) {
           if ( !event.isDefaultPrevented() ) {
             window.location.href = setting.encode ? Store.canonicalizeURL( target.href ) : target.href ;
+            if ( setting.encode ) { 'href' in this ? window.location.href = Store.getURL( setting, this ) : window.location.href = Store.getURL( setting, this ) ; }
           }
         } ) ;
         jQuery( event.currentTarget ).click() ;
       }
       event.preventDefault() ;
     },
-    prefetch: function ( ajax ) {
-      var url ;
-      switch ( this.tagName.toLowerCase() ) {
-        case 'link':
-          url = this.href ;
-          break ;
-        case 'script':
-        case 'img':
-        case 'iframe':
-          url = this.src ;
-          break ;
-      }
+    prefetch: function ( setting, ajax ) {
+      var url = Store.getURL( setting, this ) ;
+      
       if ( !ajax ) {
         Store.loaded[ url ] = true ;
       } else if ( url && !Store.loaded[ url ] ) {
         ajax.url = url ;
         Store.req[ url ] = jQuery.ajax( ajax ) ;
       }
+    },
+    getURL: function ( setting, element ) {
+      var url ;
+      switch ( element.tagName.toLowerCase() ) {
+        case 'a':
+        case 'link':
+          url = element.href ;
+          break ;
+        case 'script':
+        case 'img':
+        case 'iframe':
+          url = element.src ;
+          break ;
+      }
+      return setting.encode ? Store.canonicalizeURL( url ) : url ;
     },
     canonicalizeURL: function ( url ) {
       var ret ;

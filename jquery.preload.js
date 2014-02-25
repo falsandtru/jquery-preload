@@ -267,7 +267,6 @@
       queue = setting.queue ;
       switch ( true ) {
         case !Store.settings[ setting.id ]:
-        case setting.check ? !!Store.fire( setting.check, event.currentTarget, [ url ] ) : Store.loaded[ url.replace( /#.*/, '' ) ]:
         case queue.length > 100:
         case setting.interval ? ( new Date() ).getTime() - setting.timestamp < setting.interval : 0:
         case setting.volume >= setting.limit:
@@ -275,6 +274,7 @@
         case setting.target.protocol !== target.protocol:
         case setting.target.host !== target.host:
         case jQuery( target ).is( '[target="_blank"]' ):
+        case setting.check ? !!Store.fire( setting.check, event.currentTarget, [ url ] ) : Store.loaded[ url.replace( /#.*/, '' ) ]:
         case !( function ( points ) {
                 if ( points.length < 3 ) { return false ; }
                 var speed1, time1, speed2, time2 ;

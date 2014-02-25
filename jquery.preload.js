@@ -59,6 +59,7 @@
         filter: function(){ return /(\/|\.html?|\.php)([#?].*)?$/.test( this.href ); },
         lock: 1000,
         forward: null,
+        check: null,
         interval: 1000,
         limit: 2,
         cooldown: 10000,
@@ -241,7 +242,7 @@
       queue = setting.queue ;
       switch ( true ) {
         case !Store.settings[ setting.id ]:
-        case Store.loaded[ url.replace( /#.*/, '' ) ]:
+        case setting.check ? !!Store.fire( setting.check, event.currentTarget, [ url ] ) : Store.loaded[ url.replace( /#.*/, '' ) ]:
         case queue.length > 100:
         case setting.interval ? ( new Date() ).getTime() - setting.timestamp < setting.interval : 0:
         case setting.volume >= setting.limit:

@@ -81,6 +81,9 @@ $(document).preload();
 ####*forward: function( event, ajax )*
 プリロード中にリンクがクリックされた場合にajax処理を引き継がせるための関数を設定します。引継ぎはリンクがロック中であるかにかかわらず直ちに行われます。第二引数は`$.ajax()`の戻り値、第三引数はプリロードの開始時間です。戻り値に`false`を設定すると引継ぎをキャンセルします。初期値は`null`です。
 
+####*check: function( url )*
+プリロードを実行するかを戻り値により設定します。コンテキストにプリロードの対象となるDOM要素が与えられます。戻り値が真偽値に変換して真であればすでにプリロード済みであるかにかかわらずプリロードを実行、偽であれば中止します。プリロード済みのページを再度キャッシュしたい場合に有用です。初期値は`null`です。
+
 ####*interval: Millisecond as numbery*
 プリロードの実行間隔をミリ秒で設定します。初期値は`1000`です。
 
@@ -112,6 +115,7 @@ pjaxと組み合わせることで極めて高速なページ移動を実現で�
 ```javascript
 $.preload({
   forward: $.pjax.follow,
+  check: $.pjax.getCache,
   encode: true,
   ajax: {
     success: function ( data, textStatus, XMLHttpRequest ) {

@@ -138,6 +138,7 @@ $.pjax({
 ```javascript
 $.preload({
   forward: $.pjax.follow,
+  check: $.pjax.getCache,
   encode: true,
   ajax: {
     xhr: function(){

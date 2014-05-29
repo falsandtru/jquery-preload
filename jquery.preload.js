@@ -101,7 +101,7 @@
         touch: false,
         queue: [],
         xhr: null,
-        timestamp: 0,
+        timeStamp: 0,
         option: option
       }
     );
@@ -159,7 +159,7 @@
         // Behavior when not using the lock
         var setting = Store.settings[event.data];
         
-        event.timeStamp = (new Date()).getTime();
+        event.timeStamp = new Date().getTime();
         if (setting.encode) {'href' in this ? this.href = Store.getURL(setting, this) : this.src = Store.getURL(setting, this);}
         switch (!event.isDefaultPrevented() && jQuery.data(event.currentTarget, setting.nss.data)) {
           case 'preload':
@@ -212,7 +212,7 @@
       .bind(setting.nss.mousemove, setting.id, function(event) {
         var setting = Store.settings[event.data];
         
-        event.timeStamp = (new Date()).getTime();
+        event.timeStamp = new Date().getTime();
         setting.points.unshift(event);
         setting.points.splice(10, 1);
         Store.check(setting, event, setting.target);
@@ -222,7 +222,7 @@
         var setting = Store.settings[event.data];
         
         if (event.originalEvent.touches.length !== 1) {return;}
-        event.timeStamp = (new Date()).getTime();console.log(event.originalEvent.changedTouches.length);
+        event.timeStamp = new Date().getTime();console.log(event.originalEvent.changedTouches.length);
         setting.touch = true;
 
         setTimeout(function(){
@@ -268,7 +268,7 @@
       switch (true) {
         case !Store.settings[setting.id]:
         case queue.length > 100:
-        case setting.interval ? (new Date()).getTime() - setting.timestamp < setting.interval : 0:
+        case setting.interval ? new Date().getTime() - setting.timeStamp < setting.interval : 0:
         case setting.volume >= setting.limit:
         case setting.target !== target:
         case setting.target.protocol !== target.protocol:
@@ -316,7 +316,7 @@
                     if (jQuery.data(event.currentTarget, setting.nss.data)) {
                       // Behavior when using the lock
                       var $context = jQuery(this);
-                      var timer = Math.max(setting.lock - (new Date()).getTime() + event.data, 0);
+                      var timer = Math.max(setting.lock - new Date().getTime() + event.data, 0);
                       jQuery.data(event.currentTarget, setting.nss.data, 'click');
                       if (timer) {
                         setTimeout(function() {

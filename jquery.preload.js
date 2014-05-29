@@ -175,7 +175,7 @@
                   event.preventDefault();
                 } else {
                   // preload
-                  Store.click(setting, event)
+                  Store.click(setting, event);
                   jQuery.removeData(event.currentTarget, setting.nss.data);
                 }
               } else {
@@ -190,7 +190,7 @@
                 event.preventDefault();
               } else {
                 // preload
-                Store.click(setting, event)
+                Store.click(setting, event);
                 jQuery.removeData(event.currentTarget, setting.nss.data);
               }
             }

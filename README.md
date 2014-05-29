@@ -93,6 +93,9 @@ $(document).preload();
 ####*cooldown: Millisecond as number*
 プリロードを再実行可能にするまでの時間をミリ秒で設定します。初期値は`10000`です。
 
+####*skip: Millisecond as numbery*
+ブラウザキャッシュが存在するとみなす、ajaxによるページ取得に要した時間の上限をミリ秒で設定します。ブラウザキャッシュが存在するとみなす場合にはプリロードの実行回数と間隔を更新しません。初期値は`50`です。
+
 ####*query: string*
 プリロードによるリクエストURLに加えるパラメータを設定します。初期値は`null`です。
 
@@ -138,6 +141,7 @@ $.pjax({
 ```javascript
 $.preload({
   forward: $.pjax.follow,
+  check: $.pjax.getCache,
   encode: true,
   ajax: {
     xhr: function(){

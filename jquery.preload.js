@@ -63,6 +63,7 @@
         interval: 1000,
         limit: 2,
         cooldown: 10000,
+        skip: 50,
         query: null,
         encode: false,
         prefetch: null, //'link[rel~="dns-prefetch"], link[rel~="icon"], link[rel~="stylesheet"], script[src], .prefetch:lt(3)',
@@ -338,6 +339,7 @@
     preload: function(setting, event) {
       var ajax = jQuery.extend(true, {}, setting.ajax, {
         success: function() {
+          time = new Date().getTime() - time;
           Store.fire(setting.ajax.success, this, arguments);
           
           Store.loaded[this.url.replace(/#.*/, '')] = true;
@@ -348,7 +350,10 @@
               Store.req[i] = null;
             }
           }
-          setting.volume -= Number(arguments[2].status === 304 && !!setting.volume);
+          if (arguments[2].status === 304 || time <= setting.skip) {
+            setting.volume -= Number(!!setting.volume);
+            setting.timeStamp = 0;
+          }
           if ('click' === jQuery.data(event.currentTarget, setting.nss.data)) {
             Store.click(setting, event);
           } else {
@@ -375,6 +380,7 @@
           Store.fire(setting.ajax.error, this, arguments);
           
           setting.volume -= Number(!!setting.volume);
+          setting.timeStamp = 0;
           jQuery.removeData(event.currentTarget, setting.nss.data);
         }
       });
@@ -385,6 +391,7 @@
       }
       var url = Store.getURL(setting, event.currentTarget);
       ajax.url = url.replace(/([^#]+)(#[^\s]*)?$/, '$1' + (query ? (url.match(/\?/) ? '&' : '?') + query : '') + '$2');
+      var time = new Date().getTime();
       setting.xhr = jQuery.ajax(ajax);
     },
     click: function(setting, event) {

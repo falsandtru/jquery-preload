@@ -111,64 +111,11 @@ $(document).preload();
 ###Property
 なし
 
-##記述例
-###pjax
-pjaxと組み合わせることで極めて高速なページ移動を実現できます。pjaxは<a href="https://github.com/falsandtru/jquery.pjax.js">falsandtru/jquery.pjax.js</a>のみ対応しています。`forward`メソッドの使用を強く推奨します。
+###Event
+プラグインが使用するカスタムイベントです。
 
-```javascript
-$.preload({
-  forward: $.pjax.follow,
-  check: $.pjax.getCache,
-  encode: true,
-  ajax: {
-    success: function ( data, textStatus, XMLHttpRequest ) {
-      !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest ) ;
-    }
-  }
-});
-```
-
-```javascript
-$.pjax({
-  area: '.container',
-  cache: { click: true, submit: false, popstate: true },
-  server: { query: null }
-});
-```
-
-プログレスバーに対応する場合はpjaxのプログレスバーの設定に加え以下のように設定します。詳しくはpjaxのドキュメントを参照してください。
-
-```javascript
-$.preload({
-  forward: $.pjax.follow,
-  check: $.pjax.getCache,
-  encode: true,
-  ajax: {
-    xhr: function(){
-      var xhr = jQuery.ajaxSettings.xhr();
-      
-      $('div.loading').children().width('5%');
-      if ( xhr instanceof Object && 'onprogress' in xhr ) {
-        xhr.addEventListener( 'progress', function ( event ) {
-          var percentage = event.total ? event.loaded / event.total : 0.4;
-          percentage = percentage * 90 + 5;
-          $('div.loading').children().width( percentage + '%' );
-        }, false );
-        xhr.addEventListener( 'load', function ( event ) {
-          $('div.loading').children().width('95%');
-        }, false );
-        xhr.addEventListener( 'error', function ( event ) {
-          $('div.loading').children().css('background-color', '#00f');
-        }, false );
-      }
-      return xhr;
-    },
-    success: function ( data, textStatus, XMLHttpRequest ) {
-      !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest ) ;
-    }
-  }
-});
-```
+####*preload*
+プリロードを実行するための各種イベントハンドラを再設定します。再設定される範囲はイベントの起点により絞り込まれます。`window`オブジェクトを起点にすることはできません。ajaxやpjaxによりDOMが変更された場合は`$.preload()`を再実行せずにこのイベントを実行してください。`$.preload()`でも再設定可能ですが可読性が下がるうえ、イベントを使用した方が処理も効率的です。
 
 ##ライセンス - MIT License
 以下に定める条件に従い、本ソフトウェアおよび関連文書のファイル（以下「ソフトウェア」）の複製を取得するすべての人に対し、ソフトウェアを無制限に扱うことを無償で許可します。これには、ソフトウェアの複製を使用、複写、変更、結合、掲載、頒布、サブライセンス、および/または販売する権利、およびソフトウェアを提供する相手に同じことを許可する権利も無制限に含まれます。

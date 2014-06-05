@@ -29,18 +29,62 @@ $.preload();
 * <a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>との連携。
 
 ##preload + pjax
-<a href="https://github.com/falsandtru/jquery.preload.js">preload</a>と<a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>を連携させることで初回アクセスから極めて高速にページ移動を行うことができるため、この手法を強く推奨します。
+preloadとpjaxの複合利用は、スクリプトファイルを置くだけでページの表示(移動)にかかる時間を約0.5秒短縮する手軽で効果の高い高速化手法です。ここで使用するpjaxは高度に自動化されているためHTMLやCSSがページごとにバラバラでも動作します。スクリプトと動的に追加される要素には注意が必要ですがpjaxの`load.reload`と`load.reject`パラメータを調整するだけでプラグインを数十個入れたWordpressのような複雑なサイトでも使用できます。ただし、タッチ操作ではpreloadを使用できず効果がいまひとつのため無効にします。
 
-通常はリンクのクリックからHTMLファイルのダウンロード完了まで0.5～1秒、ページの表示（DOMロード）にさらに1秒の合計2秒前後かかるページ移動をpreload+pjaxではクリックからページの表示まで0.5秒（500ミリ秒）前後で完了することができます。PCでは多分これが一番速いと思います。
+通常はリンクのクリックからHTMLファイルのダウンロード完了まで0.5～1秒、ページの表示（DOMロード）にさらに1秒の合計2秒前後かかるページ移動をpreload+pjaxではクリックからページの表示まで0.5秒（500ミリ秒）前後で完了することができます。詳細な設定項目は<a href="https://github.com/falsandtru/jquery.preload.js">preload</a>と<a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>の各ドキュメントに記載しています。PCでは多分これが一番速いと思います。
 
 |パターン|HTMLダウンロード|DOMロード|合計|
 |:---|:--:|:--:|:--:|
 |Normal|500-1000ms|800-1600ms|1300-2600ms|
 |preload+pjax|0-700ms|50-100ms|50-800ms|
 
-※jQuery1.5以降のバージョン必須
-※Windows7+GoogleChromeで手近なサイトを計測
-※データの受信を開始するまでの待機時間が長い場合は除く
+※jQuery1.5以降のバージョン必須  
+※Windows7+Chromeで手近なサイトを計測
+
+jQueryとスクリプトを3つ追加するだけで動作します。
+
+```html
+<script charset="utf-8" src="//ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js"></script>
+<script charset="utf-8" src="/lib/jquery.preload.js"></script>
+<script charset="utf-8" src="/lib/jquery.pjax.js"></script>
+<script charset="utf-8" src="/lib/accelerate.js"></script>
+```
+
+preload: [https://github.com/falsandtru/jquery.preload.js](https://github.com/falsandtru/jquery.preload.js)  
+pjax: [https://github.com/falsandtru/jquery.pjax.js](https://github.com/falsandtru/jquery.pjax.js)
+
+```javascript
+// accelerate.js
+if (!/touch|tablet|mobile|android|iphone|ipad|ios|windows phone|Mobile(\/\w+)? Safari/i.test(window.navigator.userAgent)) {
+  $.preload({
+    forward: $.pjax.follow,
+    check: $.pjax.getCache,
+    encode: true,
+    ajax: {
+      success: function ( data, textStatus, XMLHttpRequest ) {
+        !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest );
+      }
+    }
+  });
+  
+  $.pjax({
+    area: 'body',
+    load: { css: true, script: true },
+    cache: { click: true, submit: false, popstate: true },
+    server: { query: null },
+    speedcheck: true
+  });
+  
+  $(document).bind('pjax.ready', function() {$(document).trigger('preload');});
+}
+```
+
+クリックから表示までにかかった時間をコンソールに出力します。以下の出力はクリックの493ミリ秒前にリンク先のページの取得を開始し、クリックから386ミリ秒で表示されたときのものです。
+
+```
+[-493, 10, 361, 386, 411, 490, 492, 496]
+["preload(-493)", "continue(10)", "loaded(361)", "content(386)", "css(411)", "script(490)", "renderd(492)", "defer(496)"]
+```
 
 ##使用法
 プリロードにより高速化するためにはユーザーがカーソルを合わせてからクリックするまでの時間＋ロック時間内にプリロードが完了しなければならず、HTMLのダウンロードに要する時間（表示に要する時間ではない）をあらかじめ高速化しロック時間を平均ダウンロード時間より大きく設定する必要があります。平均ダウンロード時間が1秒を大きく超える場合はかえってページ移動が遅くなる可能性が高くなります。ダウンロード時間はブラウザのデベロッパーツールのネットワークタブなどで確認できます。
@@ -111,64 +155,11 @@ $(document).preload();
 ###Property
 なし
 
-##記述例
-###pjax
-pjaxと組み合わせることで極めて高速なページ移動を実現できます。pjaxは<a href="https://github.com/falsandtru/jquery.pjax.js">falsandtru/jquery.pjax.js</a>のみ対応しています。`forward`メソッドの使用を強く推奨します。
+###Event
+プラグインが使用するカスタムイベントです。
 
-```javascript
-$.preload({
-  forward: $.pjax.follow,
-  check: $.pjax.getCache,
-  encode: true,
-  ajax: {
-    success: function ( data, textStatus, XMLHttpRequest ) {
-      !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest ) ;
-    }
-  }
-});
-```
-
-```javascript
-$.pjax({
-  area: '.container',
-  cache: { click: true, submit: false, popstate: true },
-  server: { query: null }
-});
-```
-
-プログレスバーに対応する場合はpjaxのプログレスバーの設定に加え以下のように設定します。詳しくはpjaxのドキュメントを参照してください。
-
-```javascript
-$.preload({
-  forward: $.pjax.follow,
-  check: $.pjax.getCache,
-  encode: true,
-  ajax: {
-    xhr: function(){
-      var xhr = jQuery.ajaxSettings.xhr();
-      
-      $('div.loading').children().width('5%');
-      if ( xhr instanceof Object && 'onprogress' in xhr ) {
-        xhr.addEventListener( 'progress', function ( event ) {
-          var percentage = event.total ? event.loaded / event.total : 0.4;
-          percentage = percentage * 90 + 5;
-          $('div.loading').children().width( percentage + '%' );
-        }, false );
-        xhr.addEventListener( 'load', function ( event ) {
-          $('div.loading').children().width('95%');
-        }, false );
-        xhr.addEventListener( 'error', function ( event ) {
-          $('div.loading').children().css('background-color', '#00f');
-        }, false );
-      }
-      return xhr;
-    },
-    success: function ( data, textStatus, XMLHttpRequest ) {
-      !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest ) ;
-    }
-  }
-});
-```
+####*preload*
+プリロードを実行するための各種イベントハンドラを再設定します。再設定される範囲はイベントの起点により絞り込まれます。`window`オブジェクトを起点にすることはできません。ajaxやpjaxによりDOMが変更された場合は`$.preload()`を再実行せずにこのイベントを実行してください。`$.preload()`でも再設定可能ですが可読性が下がるうえ、イベントを使用した方が処理も効率的です。
 
 ##ライセンス - MIT License
 以下に定める条件に従い、本ソフトウェアおよび関連文書のファイル（以下「ソフトウェア」）の複製を取得するすべての人に対し、ソフトウェアを無制限に扱うことを無償で許可します。これには、ソフトウェアの複製を使用、複写、変更、結合、掲載、頒布、サブライセンス、および/または販売する権利、およびソフトウェアを提供する相手に同じことを許可する権利も無制限に含まれます。

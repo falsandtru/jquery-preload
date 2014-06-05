@@ -5,8 +5,8 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.1.6
- * @updated 2014/05/29
+ * @version 0.2.0
+ * @updated 2014/06/06
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
  * ---
@@ -87,7 +87,6 @@
           event: setting.nss.array.join('.'),
           data: setting.nss.array.join('-'),
           class4html: setting.nss.array.join('-'),
-          cmd: ['cmd'].concat(setting.nss.array.join(':')).join('.'),
           click: ['click'].concat(setting.nss.array.join(':')).join('.'),
           mousemove: ['mousemove'].concat(setting.nss.array.join(':')).join('.'),
           mouseover: ['mouseover'].concat(setting.nss.array.join(':')).join('.'),
@@ -154,97 +153,98 @@
       var url = setting.encode ? Store.canonicalizeURL(window.location.href) : window.location.href;
       Store.loaded[url.replace(/#.*/, '')] = true;
       
-      $context.find(setting.link).filter(setting.filter)
-      .unbind(setting.nss.click)
-      .one(setting.nss.click, setting.id, function(event) {
-        // Behavior when not using the lock
-        var setting = Store.settings[event.data];
+      jQuery(document)
+      .unbind(setting.nss.event)
+      .bind(setting.nss.event, function(event) {
+        setting.volume = 0;
+        setting.timeStamp = 0;
         
-        event.timeStamp = new Date().getTime();
-        if (setting.encode) {'href' in this ? this.href = Store.getURL(setting, this) : this.src = Store.getURL(setting, this);}
-        switch (!event.isDefaultPrevented() && jQuery.data(event.currentTarget, setting.nss.data)) {
-          case 'preload':
-          case 'lock':
-            if (setting.forward) {
-              // forward
-              var url = Store.getURL(setting, event.currentTarget);
-              if (false === Store.fire(setting.forward, null, [event, setting.xhr, setting.timeStamp])) {
-                // forward fail
+        jQuery(event.target).find(setting.link).filter(setting.filter)
+        .unbind(setting.nss.click)
+        .one(setting.nss.click, setting.id, function(event) {
+          // Behavior when not using the lock
+          var setting = Store.settings[event.data];
+          
+          event.timeStamp = new Date().getTime();
+          if (setting.encode) {'href' in this ? this.href = Store.getURL(setting, this) : this.src = Store.getURL(setting, this);}
+          switch (!event.isDefaultPrevented() && jQuery.data(event.currentTarget, setting.nss.data)) {
+            case 'preload':
+            case 'lock':
+              if (setting.forward) {
+                // forward
+                var url = Store.getURL(setting, event.currentTarget);
+                if (false === Store.fire(setting.forward, null, [event, setting.xhr, setting.timeStamp])) {
+                  // forward fail
+                  if ('lock' === jQuery.data(event.currentTarget, setting.nss.data)) {
+                    // lock
+                    event.preventDefault();
+                  } else {
+                    // preload
+                    Store.click(setting, event);
+                    jQuery.removeData(event.currentTarget, setting.nss.data);
+                  }
+                } else {
+                  // forward success
+                  event.preventDefault();
+                  jQuery.removeData(event.currentTarget, setting.nss.data);
+                }
+              } else {
+                // not forward
                 if ('lock' === jQuery.data(event.currentTarget, setting.nss.data)) {
                   // lock
                   event.preventDefault();
                 } else {
                   // preload
-                  Store.click(setting, event)
+                  Store.click(setting, event);
                   jQuery.removeData(event.currentTarget, setting.nss.data);
                 }
-              } else {
-                // forward success
-                event.preventDefault();
-                jQuery.removeData(event.currentTarget, setting.nss.data);
               }
-            } else {
-              // not forward
-              if ('lock' === jQuery.data(event.currentTarget, setting.nss.data)) {
-                // lock
-                event.preventDefault();
-              } else {
-                // preload
-                Store.click(setting, event)
-                jQuery.removeData(event.currentTarget, setting.nss.data);
-              }
-            }
-            break;
-          default:
-            setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort();
-        }
-      })
-      .unbind(setting.nss.mouseover)
-      .bind(setting.nss.mouseover, setting.id, function(event) {
-        var setting = Store.settings[event.data];
-        setting.target = this;
-      })
-      .unbind(setting.nss.mouseout)
-      .bind(setting.nss.mouseout, setting.id, function(event) {
-        var setting = Store.settings[event.data];
-        setting.target = null;
-      })
-      .unbind(setting.nss.mousemove)
-      .bind(setting.nss.mousemove, setting.id, function(event) {
-        var setting = Store.settings[event.data];
-        
-        event.timeStamp = new Date().getTime();
-        setting.points.unshift(event);
-        setting.points.splice(10, 1);
-        Store.check(setting, event, setting.target);
-      })/*
-      .unbind(setting.nss.touchstart)
-      .bind(setting.nss.touchstart, setting.id, function(event) {
-        var setting = Store.settings[event.data];
-        
-        if (event.originalEvent.touches.length !== 1) {return;}
-        event.timeStamp = new Date().getTime();console.log(event.originalEvent.changedTouches.length);
-        setting.touch = true;
-
-        setTimeout(function(){
-          if (setting.touch && !jQuery.data(event.currentTarget, setting.nss.data)) {
-            jQuery.data(event.currentTarget, setting.nss.data, 'preload');
-            Store.preload(setting, event);
+              break;
+            default:
+              setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort();
           }
-        }, 500);
-      })
-      .unbind(setting.nss.touchmove)
-      .bind(setting.nss.touchmove, setting.id, function(event) {
-        var setting = Store.settings[event.data];
-        
-        setting.touch = false;
-      })*/;
-      
-      jQuery(document)
-      .trigger(setting.nss.cmd)
-      .one(setting.nss.cmd, setting.id, function(event) {
-        Store.settings[event.data] = undefined;
-      });
+        })
+        .unbind(setting.nss.mouseover)
+        .bind(setting.nss.mouseover, setting.id, function(event) {
+          var setting = Store.settings[event.data];
+          setting.target = this;
+        })
+        .unbind(setting.nss.mouseout)
+        .bind(setting.nss.mouseout, setting.id, function(event) {
+          var setting = Store.settings[event.data];
+          setting.target = null;
+        })
+        .unbind(setting.nss.mousemove)
+        .bind(setting.nss.mousemove, setting.id, function(event) {
+          var setting = Store.settings[event.data];
+          
+          event.timeStamp = new Date().getTime();
+          setting.points.unshift(event);
+          setting.points.splice(10, 1);
+          Store.check(setting, event, setting.target);
+        })/*
+        .unbind(setting.nss.touchstart)
+        .bind(setting.nss.touchstart, setting.id, function(event) {
+          var setting = Store.settings[event.data];
+          
+          if (event.originalEvent.touches.length !== 1) {return;}
+          event.timeStamp = new Date().getTime();console.log(event.originalEvent.changedTouches.length);
+          setting.touch = true;
+  
+          setTimeout(function(){
+            if (setting.touch && !jQuery.data(event.currentTarget, setting.nss.data)) {
+              jQuery.data(event.currentTarget, setting.nss.data, 'preload');
+              Store.preload(setting, event);
+            }
+          }, 500);
+        })
+        .unbind(setting.nss.touchmove)
+        .bind(setting.nss.touchmove, setting.id, function(event) {
+          var setting = Store.settings[event.data];
+          
+          setting.touch = false;
+        })*/;
+      }).trigger(setting.nss.event);
       
       (function(id, wait) {
         setTimeout(function() {
@@ -441,8 +441,8 @@
       // Trim
       ret = Store.trim(url);
       // Remove string starting with an invalid character
-      ret = ret.replace(/[<>"{}|\\^\[\]`\s].*/,'');
-      // Deny value beginning with the string of HTTP (S) other than
+      ret = ret.replace(/["`^|\\<>{}\[\]\s].*/, '');
+      // Deny value beginning with the string of HTTP(S) other than
       ret = /^https?:/i.test(ret) ? ret : jQuery('<a/>', {href: ret})[0].href;
       // Unify to UTF-8 encoded values
       ret = encodeURI(decodeURI(ret));
@@ -456,9 +456,9 @@
       if (String.prototype.trim) {
         text = String(text).trim();
       } else {
-        if (text = String(text).replace(/^\s+/, '')) {
+        if (text = String(text).replace(/^[\s\uFEFF\xA0]+/, '')) {
           for (var i = text.length; --i;) {
-            if (/\S/.test(text.charAt(i))) {
+            if (/[^\s\uFEFF\xA0]/.test(text.charAt(i))) {
               text = text.substring(0, i + 1);
               break;
             }

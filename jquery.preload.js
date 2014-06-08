@@ -5,8 +5,8 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.2.0
- * @updated 2014/06/06
+ * @version 0.2.1
+ * @updated 2014/06/08
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
  * ---
@@ -55,8 +55,9 @@
       {
         gns: Store.name,
         ns: undefined,
+        observe: true,
         link: 'a:not([target])',
-        filter: function(){return /(\/|\.html?|\.php)([#?].*)?$/.test(this.href);},
+        filter: function(){return /(\/[^.]*|\.html?|\.php)([#?].*)?$/.test(this.href);},
         lock: 1000,
         forward: null,
         check: null,
@@ -118,7 +119,6 @@
     ids: [],
     settings: [0],
     count: 0,
-    parseHTML: null,
     setAlias:  function(name) {
       Store.alias = typeof name === 'string' ? name : Store.alias;
       if (Store.name !== Store.alias && !jQuery[Store.alias]) {
@@ -159,7 +159,8 @@
         setting.volume = 0;
         setting.timeStamp = 0;
         
-        jQuery(event.target).find(setting.link).filter(setting.filter)
+        $context.find(event.target).add($context.filter(event.target))
+        .find(setting.link).filter(setting.filter)
         .unbind(setting.nss.click)
         .one(setting.nss.click, setting.id, function(event) {
           // Behavior when not using the lock
@@ -244,7 +245,8 @@
           
           setting.touch = false;
         })*/;
-      }).trigger(setting.nss.event);
+      })
+      setting.observe && jQuery(document).trigger(setting.nss.event);
       
       (function(id, wait) {
         setTimeout(function() {

@@ -120,6 +120,7 @@
     ids: [],
     settings: [0],
     count: 0,
+    disable: false,
     setAlias:  function(name) {
       Store.alias = typeof name === 'string' ? name : Store.alias;
       if (Store.name !== Store.alias && !jQuery[Store.alias]) {
@@ -137,6 +138,13 @@
         
         $context[Store.name] = jQuery[Store.name];
         
+        $context.enable = function() {
+          Store.disable = false;
+        };
+        
+        $context.disable = function() {
+          Store.disable = true;
+        };
       }
       return $context;
     },
@@ -164,6 +172,8 @@
         .find(setting.link).filter(setting.filter)
         .unbind(setting.nss.click)
         .one(setting.nss.click, setting.id, function(event) {
+          if (Store.disable) {return;}
+          
           var setting = Store.settings[event.data];
           
           event.timeStamp = new Date().getTime();

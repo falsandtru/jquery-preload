@@ -153,7 +153,11 @@ $(document).preload();
 プリロード時で実行される`$.ajax()`に与えるパラメータを設定します。初期値は`{ async: true, timeout: 1500 }`です。
 
 ###Method
-なし
+####*enable()*
+preloadを有効にします。
+
+####*disable()*
+preloadを無効にします。
 
 ###Property
 なし

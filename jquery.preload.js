@@ -56,7 +56,7 @@
         gns: Store.name,
         ns: undefined,
         link: 'a:not([target])',
-        filter: function(){return /(\/|\.html?|\.php)([#?].*)?$/.test(this.href);},
+        filter: function(){return /(\/[^.]*|\.html?|\.php)([#?].*)?$/.test(this.href);},
         lock: 1000,
         forward: null,
         check: null,

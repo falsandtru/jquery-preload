@@ -33,15 +33,22 @@ GoogleやAmazonが示すように、ページのロードタイムを1秒前後�
 
 preloadとpjaxの複合利用は、スクリプトファイルを置くだけでページの表示(移動)にかかる時間を約0.5秒短縮する手軽で効果の高い高速化手法です。ここで使用するpjaxは高度に自動化されているためHTMLやCSSがページごとにバラバラでも動作します。スクリプトと動的に追加される要素には注意が必要ですがpjaxの`load.reload`と`load.reject`パラメータを調整するだけでプラグインを数十個入れたWordpressのような複雑なサイトでも快適に使用できますし、ユーザーJSとしてさえ動作します。ただし、タッチ操作ではpreloadを使用できず効果がいまひとつのため無効にします。
 
+ページロードがどれだけ速くなったかをコンソールの出力から確認できます。以下の出力はクリックの310ミリ秒前にリンク先のページの取得を開始し、クリックから450ミリ秒で表示されたときのものです。
+
+```
+[-310, 1, 361, 379, 403, 424, 450, 486, 487, 491] jquery.pjax.js:1035
+["preload(-310)", "continue(1)", "load(361)", "parse(379)", "head(403)", "content(424)", "css(450)", "script(486)", "renderd(487)", "defer(491)"]
+```
+
+※jQuery1.5以降のバージョン必須  
+※Windows7+Chrome
+
 通常はリンクのクリックからHTMLファイルのダウンロード完了まで0.5～1秒、ページの表示（DOMロード）にさらに1秒の合計2秒前後かかるページ移動をpreload+pjaxではクリックからページの表示まで0.5秒（500ミリ秒）前後で完了することができます。詳細な設定項目は<a href="https://github.com/falsandtru/jquery.preload.js">preload</a>と<a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>の各ドキュメントに記載しています。PCでは多分これが一番速いと思います。
 
 |パターン|HTMLダウンロード|DOMロード|合計|
 |:---|:--:|:--:|:--:|
 |Normal|500-1000ms|800-1600ms|1300-2600ms|
 |preload+pjax|0-700ms|50-100ms|50-800ms|
-
-※jQuery1.5以降のバージョン必須  
-※Windows7+Chromeで手近なサイトを計測
 
 jQueryとスクリプトを3つ追加するだけで動作します。
 
@@ -79,13 +86,6 @@ if (!/touch|tablet|mobile|phone|android|iphone|ipad|blackberry/i.test(window.nav
   
   $(document).bind('pjax.ready', function() {$(document).trigger('preload');});
 }
-```
-
-クリックから表示までにかかった時間をコンソールに出力します。以下の出力はクリックの310ミリ秒前にリンク先のページの取得を開始し、クリックから450ミリ秒で表示されたときのものです。
-
-```
-[-310, 1, 361, 379, 403, 424, 450, 486, 487, 491] jquery.pjax.js:1035
-["preload(-310)", "continue(1)", "load(361)", "parse(379)", "head(403)", "content(424)", "css(450)", "script(486)", "renderd(487)", "defer(491)"]
 ```
 
 ##使用法

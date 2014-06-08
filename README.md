@@ -119,6 +119,9 @@ $(document).preload();
 ####*filter: Selector as string / function*
 プリロードの対象となるリンクを絞り込むjQueryセレクタまたは関数を設定します。初期値は`function(){return /(\/[^.]*|\.html?|\.php)([#?].*)?$/.test(this.href);}`です。
 
+####*observe: Switch as boolean*
+`$.preload()`を実行後直ちにイベントハンドラを設定するかを設定します。`false`を設定した場合、`preload`イベントによりイベントハンドラを設定する必要があります。初期値は`true`です。
+
 ####*lock: Millisecond as number*
 プリロード中にプリロードの対象となるリンクをロックする時間をミリ秒で設定します。ロック中のクリックはajax処理を外部に引き渡した場合を除きプリロードの完了またはロック時間が経過するまで保留されます。初期値は`1000`です。
 

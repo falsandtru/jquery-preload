@@ -55,6 +55,7 @@
       {
         gns: Store.name,
         ns: undefined,
+        observe: true,
         link: 'a:not([target])',
         filter: function(){return /(\/[^.]*|\.html?|\.php)([#?].*)?$/.test(this.href);},
         lock: 1000,
@@ -244,7 +245,8 @@
           
           setting.touch = false;
         })*/;
-      }).trigger(setting.nss.event);
+      })
+      setting.observe && jQuery(document).trigger(setting.nss.event);
       
       (function(id, wait) {
         setTimeout(function() {

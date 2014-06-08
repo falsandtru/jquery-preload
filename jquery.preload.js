@@ -158,7 +158,8 @@
         setting.volume = 0;
         setting.timeStamp = 0;
         
-        jQuery(event.target).find(setting.link).filter(setting.filter)
+        $context.find(event.target).add($context.filter(event.target))
+        .find(setting.link).filter(setting.filter)
         .unbind(setting.nss.click)
         .one(setting.nss.click, setting.id, function(event) {
           // Behavior when not using the lock

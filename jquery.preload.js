@@ -118,7 +118,6 @@
     ids: [],
     settings: [0],
     count: 0,
-    parseHTML: null,
     setAlias:  function(name) {
       Store.alias = typeof name === 'string' ? name : Store.alias;
       if (Store.name !== Store.alias && !jQuery[Store.alias]) {

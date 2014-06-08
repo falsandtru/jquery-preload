@@ -102,6 +102,7 @@
         touch: false,
         queue: [],
         xhr: null,
+        ajax: jQuery.extend(true, {}, jQuery.ajaxSettings, setting.ajax),
         timeStamp: 0,
         option: option
       }
@@ -163,7 +164,6 @@
         .find(setting.link).filter(setting.filter)
         .unbind(setting.nss.click)
         .one(setting.nss.click, setting.id, function(event) {
-          // Behavior when not using the lock
           var setting = Store.settings[event.data];
           
           event.timeStamp = new Date().getTime();
@@ -303,6 +303,8 @@
               case !setting.target:
               case event !== setting.points[0]:
               case event.pageX !== setting.points[0].pageX || event.pageY !== setting.points[0].pageY:
+              case !setting.ajax.crossDomain && setting.target.protocol !== window.location.protocol:
+              case !setting.ajax.crossDomain && setting.target.host !== window.location.host:
                 break;
               default:
                 setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort();

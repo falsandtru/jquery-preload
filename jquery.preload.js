@@ -5,8 +5,8 @@
  * ---
  * @Copyright(c) 2014, falsandtru
  * @license MIT http://opensource.org/licenses/mit-license.php
- * @version 0.2.2
- * @updated 2014/06/08
+ * @version 0.2.3
+ * @updated 2014/06/13
  * @author falsandtru https://github.com/falsandtru/
  * @CodingConventions Google JavaScript Style Guide
  * ---
@@ -418,7 +418,7 @@
         .one(setting.nss.click, function(event) {
           if (!event.isDefaultPrevented()) {
             window.location.href = setting.encode ? Store.canonicalizeURL(target.href) : target.href;
-            if (setting.encode) {'href' in this ? window.location.href = Store.getURL(setting, this) : window.location.href = Store.getURL(setting, this);}
+            if (setting.encode) {window.location.href = Store.getURL(setting, event.target);}
           }
         });
         jQuery(event.currentTarget).click();

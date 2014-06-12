@@ -418,7 +418,7 @@
         .one(setting.nss.click, function(event) {
           if (!event.isDefaultPrevented()) {
             window.location.href = setting.encode ? Store.canonicalizeURL(target.href) : target.href;
-            if (setting.encode) {'href' in this ? window.location.href = Store.getURL(setting, this) : window.location.href = Store.getURL(setting, this);}
+            if (setting.encode) {window.location.href = Store.getURL(setting, event.target);}
           }
         });
         jQuery(event.currentTarget).click();

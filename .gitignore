@@ -1,0 +1,17 @@
+﻿# secret
+.coveralls.yml
+
+# eclipse
+.project
+.metadata
+.settings
+
+# adobe
+_notes
+
+# ci
+node_modules
+coverage
+
+# terminal
+cmd.exe

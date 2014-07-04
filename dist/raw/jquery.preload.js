@@ -3,7 +3,7 @@
  * jquery.preload.js
  * 
  * @name jquery.preload.js
- * @version 0.2.3
+ * @version 0.3.0
  * ---
  * @author falsandtru https://github.com/falsandtru/jquery.preload.js/
  * @copyright 2014, falsandtru

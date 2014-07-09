@@ -37,7 +37,7 @@ $.preload();
 ## preload + pjax
 GoogleやAmazonが示すように、ページのロードタイムを1秒前後にまで改善したあとさらに短くする0.1秒には莫大な価値があります。preloadとpjaxはこの価値を約0.5秒分提供します。
 
-preloadとpjaxの複合利用は、スクリプトファイルを置くだけでページの表示(移動)にかかる時間を約0.5秒短縮する手軽で効果の高い高速化手法です。ここで使用するpjaxは高度に自動化されているためHTMLやCSSがページごとにバラバラでも動作します。スクリプトと動的に追加される要素には注意が必要ですがpjaxの`load.reload`と`load.reject`パラメータを調整するだけでプラグインを数十個入れたWordpressのような複雑なサイトでも快適に使用できますし、ユーザーJSとしてさえ動作します。ただし、タッチ操作ではpreloadを使用できず効果がいまひとつのため無効にします。
+preloadとpjaxの複合利用は、スクリプトファイルを置くだけでページの表示(移動)にかかる時間を約0.5秒短縮する手軽で効果の高い高速化手法です。ここで使用するpjaxは高度に自動化されているためHTMLやCSSがページごとにバラバラでも動作します。スクリプトと動的に追加される要素には注意が必要ですがpjaxの`load.reload`と`load.ignore`パラメータを調整するだけでプラグインを数十個入れたWordpressのような複雑なサイトでも快適に使用できますし、ユーザーJSとしてさえ動作します。ただし、タッチ操作ではpreloadを使用できず効果がいまひとつのため無効にします。
 
 ページロードがどれだけ速くなったかをコンソールの出力から確認できます。以下の出力はクリックの310ミリ秒前にリンク先のページの取得を開始し、クリックから450ミリ秒で表示されたときのものです。
 
@@ -46,7 +46,7 @@ preloadとpjaxの複合利用は、スクリプトファイルを置くだけで
 ["preload(-310)", "continue(1)", "load(361)", "parse(379)", "head(403)", "content(424)", "css(450)", "script(486)", "renderd(487)", "defer(491)"]
 ```
 
-※jQuery1.5以降のバージョン必須  
+※jQuery1.6+
 ※Windows7+Chrome
 
 通常はリンクのクリックからHTMLファイルのダウンロード完了まで0.5～1秒、ページの表示（DOMロード）にさらに1秒の合計2秒前後かかるページ移動をpreload+pjaxではクリックからページの表示まで0.5秒（500ミリ秒）前後で完了することができます。詳細な設定項目は<a href="https://github.com/falsandtru/jquery.preload.js">preload</a>と<a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>の各ドキュメントに記載しています。PCでは多分これが一番速いと思います。
@@ -76,7 +76,7 @@ if (!/touch|tablet|mobile|phone|android|iphone|ipad|blackberry/i.test(window.nav
     check: $.pjax.getCache,
     encode: true,
     ajax: {
-      success: function ( data, textStatus, XMLHttpRequest ) {
+      done: function ( data, textStatus, XMLHttpRequest ) {
         !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest );
       }
     }
@@ -183,23 +183,3 @@ preloadを無効にします。
 
 <a href="http://opensource.org/licenses/mit-license.php" target="_blank">http://opensource.org/licenses/mit-license.php</a>  
 <a href="http://sourceforge.jp/projects/opensource/wiki/licenses%2FMIT_license" target="_blank">http://sourceforge.jp/projects/opensource/wiki/licenses%2FMIT_license</a>
-
-## jQuery Plugins
-
-### <a href="https://github.com/falsandtru/jquery.preload.js">preload</a>
-ユーザーが次に見るページを予測してあらかじめ読み込みページ移動を高速化します。
-
-### <a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>
-HTML5による高速なページ移動機能をウェブサイトに実装します。
-
-### <a href="https://github.com/falsandtru/jquery.visibilitytrigger.js">visibilitytrigger</a>
-スクロールにより特定のHTML要素が画面に表示されることを条件としてスクリプトを遅延実行させます。
-
-### <a href="https://github.com/falsandtru/jquery.clientenv.js">clientenv</a>
-サイトの閲覧者のOS、ブラウザ、フォント対応などを判定してクロスブラウザ対応の労力を軽減します。
-
-### <a href="https://github.com/falsandtru/jquery.validator.js">validator</a>
-JavaScriptの動作検証とエラーレポートを行う、インストール不要の埋め込み型検証ツールです。
-
-### <a href="https://github.com/falsandtru/jquery.spage.js">spage</a>
-AutoPagerやAutoPatchWorkのようなページの自動読み込み＆継ぎ足し機能をウェブサイトに実装します。

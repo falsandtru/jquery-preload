@@ -1,4 +1,6 @@
 # preload
+**[Download](https://github.com/falsandtru/jquery.preload.js/releases)**
+
 preloadはユーザーが次に見るページを予測して先読み（事前読み込み）することでページ移動を高速化します。
 
 ## 概要

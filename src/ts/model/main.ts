@@ -37,11 +37,9 @@ module MODULE {
         queue: []
       });
 
-      var url = window.location.href.replace(/#.*/, '');
-      url = setting.encode ? M.UTIL.canonicalizeUrl(url) : url;
-      var loaded = {};
-      loaded[url] = true;
-      this.stock('loaded', loaded, true);
+      var url: string = setting.encode ? M.UTIL.canonicalizeUrl(window.location.href) : window.location.href;
+      url = url.replace(/#.*/, '');
+      this.loaded_[url] = true;
 
       $context.uuid = setting.uuid;
 
@@ -65,6 +63,12 @@ module MODULE {
           lock: 1000,
           forward: null,
           check: null,
+          balance: {
+            host: '',
+            ajax: {
+              beforeSend: null
+            }
+          },
           interval: 1000,
           limit: 2,
           cooldown: 10000,
@@ -286,6 +290,7 @@ module MODULE {
 
     preload_(event: JQueryMouseEventObject): void {
       var setting: SettingInterface = this.stock(event.data),
+          host = setting.balance.host && setting.balance.host(),
           that = this;
 
       var ajax = jQuery.extend(true, {}, setting.ajax, {
@@ -316,14 +321,14 @@ module MODULE {
               setting.timeStamp = 0;
               jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
             }
-          });
+          },
+          host && setting.balance.ajax);
       var query: any = setting.query;
       if (query) {
         query = query.split('=');
         query = encodeURIComponent(query[0]) + (query.length > 0 ? '=' + encodeURIComponent(query[1]) : '');
       }
-      var url = this.getURL_(setting, <HTMLElement>event.currentTarget),
-          host = setting.host && setting.host();
+      var url = this.getURL_(setting, <HTMLElement>event.currentTarget);
       url = host ? url.replace('//[^/]+', '//' + host) : url;
       ajax.url = url.replace(/([^#]+)(#[^\s]*)?$/, '$1' + (query ? (url.match(/\?/) ? '&' : '?') + query : '') + '$2');
       var time = new Date().getTime();

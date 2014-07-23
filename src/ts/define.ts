@@ -91,6 +91,10 @@ module MODULE {
     lock: number
     forward?: () => any
     check?: () => any
+    balance: {
+      host?: () => any
+      ajax: JQueryAjaxSettings
+    }
     interval: number
     limit: number
     cooldown: number

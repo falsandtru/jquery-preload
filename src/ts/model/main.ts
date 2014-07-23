@@ -7,6 +7,7 @@ module MODULE {
   export class ModelMain extends ModelTemplate implements ModelInterface {
 
     state_: State
+    loaded_: { [index: string]: boolean } = {}
 
     main_($context: ContextInterface, option): ContextInterface {
 
@@ -35,11 +36,9 @@ module MODULE {
         queue: []
       });
 
-      var url = window.location.href.replace(/#.*/, '');
-      url = setting.encode ? M.UTIL.canonicalizeUrl(url) : url;
-      var loaded = {};
-      loaded[url] = true;
-      this.stock('loaded', loaded, true);
+      var url: string = setting.encode ? M.UTIL.canonicalizeUrl(window.location.href) : window.location.href;
+      url = url.replace(/#.*/, '');
+      this.loaded_[url] = true;
 
       $context.uuid = setting.uuid;
 
@@ -63,6 +62,13 @@ module MODULE {
           lock: 1000,
           forward: null,
           check: null,
+          balance: {
+            host: '',
+            ajax: {
+              crossDomain: true,
+              beforeSend: null
+            }
+          },
           interval: 1000,
           limit: 2,
           cooldown: 10000,
@@ -174,9 +180,14 @@ module MODULE {
 
       event.timeStamp = new Date().getTime();
       if (!setting.points[0] || 30 < event.timeStamp - setting.points[0].timeStamp) {
+        //var point = {
+        //  pageX: event.pageX,
+        //  pageY: event.pageY,
+        //  timeStamp: new Date().getTime()
+        //};
         setting.points.unshift(event);
-        setting.points.splice(10, 1);
-        this.check_(event, setting);
+        setting.points = setting.points.slice(0, 3);
+        setting.points.length >= 3 && this.check_(event, setting);
       }
     }
     MOUSEOVER(event: JQueryMouseEventObject): void {
@@ -188,42 +199,138 @@ module MODULE {
       setting.target = null;
     }
 
+    speed(points: { pageX: number; pageY: number; timeStamp: number; }[]): boolean {
+      if (points.length < 3) { return false; }
+      var speed1, time1, speed2, time2;
+      time1 = points[0].timeStamp - points[1].timeStamp;
+      speed1 = parseInt(String(Math.pow(points[0].pageX - points[1].pageX, 2) + Math.pow(points[0].pageY - points[1].pageY, 2) / (time1 || 1)), 10);
+      time2 = points[1].timeStamp - points[2].timeStamp;
+      speed2 = parseInt(String(Math.pow(points[1].pageX - points[2].pageX, 2) + Math.pow(points[1].pageY - points[2].pageY, 2) / (time2 || 1)), 10);
+
+      var speed = 1000 > time1 && 1000 > time2 ? [speed1 - speed2, speed1] : [];
+      switch (true) {
+        case !speed.length:
+          break;
+        case -50 > speed[0] && 200 > speed[1]:
+        case -50 < speed[0] && 50 > speed[0] && -50 < speed[1] && 50 > speed[1]:
+          return true;
+      }
+      return false;
+    }
+    check_(event: JQueryMouseEventObject, setting: SettingInterface): void {
+      switch (true) {
+        case setting.volume >= setting.limit:
+        case setting.points.length < 3:
+        case setting.points[2].pageX === event.pageX:
+        case setting.interval ? new Date().getTime() - setting.timeStamp < setting.interval : false:
+          return;
+        default:
+          var check = () => {
+            var url: string = this.getURL_(setting, <HTMLElement>event.currentTarget);
+            url = url.replace(/#.*/, '');
+            switch (true) {
+              case setting.target !== event.currentTarget:
+              case setting.check ? !!M.UTIL.fire(setting.check, event.currentTarget, [url]) : this.loaded_[url]:
+              case !setting.ajax.crossDomain && (setting.target.protocol !== window.location.protocol || setting.target.host !== window.location.host):
+                return;
+            }
+            this.drive_(event, setting);
+          }
+          if (0 && Worker && URL && URL.createObjectURL && Blob) {
+            var job;
+            job = [
+              'var test = ' + this.speed.toString() + ';',
+              'onmessage = function(event) {postMessage(test(event.data));self.close();};'
+            ];
+            var worker = new Worker(URL.createObjectURL(new Blob(job, { type: "text/javascript" })));;
+            worker.onmessage = (event) => {
+              event.data && check();
+              worker.terminate();
+            };
+            worker.onerror = (event) => {
+              worker.terminate();
+            };
+            worker.postMessage(setting.points);
+          } else {
+            if (this.speed(setting.points)) {
+              check();
+            }
+          }
+      }
+    }
+
+    drive_(event: JQueryMouseEventObject, setting: SettingInterface): void {
+      setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort();
+      this.loaded_[this.getURL_(setting, <HTMLElement>event.currentTarget).replace(/#.*/, '')] = true;
+      ++setting.volume;
+      setting.timeStamp = event.timeStamp;
+
+      jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data, 'preload');
+
+      if (setting.lock) {
+        jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data, 'lock');
+        jQuery(<HTMLElement>event.currentTarget)
+        .one(setting.nss.click, event => {
+          // `this` is Model instance
+          if (jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data)) {
+            // Behavior when using the lock
+            var timer = Math.max(setting.lock - new Date().getTime() + event.data, 0);
+            jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data, 'click');
+            if (timer) {
+              setTimeout(() => {
+                'click' === jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data) && this.click_(setting, event);
+                jQuery.removeData(<HTMLElement>event.currentTarget, setting.nss.data);
+              }, timer);
+              event.preventDefault();
+            }
+          }
+        });
+      }
+      this.preload_(event);
+    }
+
     preload_(event: JQueryMouseEventObject): void {
       var setting: SettingInterface = this.stock(event.data),
+          host = setting.balance.host && setting.balance.host(),
           that = this;
 
       var ajax = jQuery.extend(true, {}, setting.ajax, {
-          success: function (...args: any[]) {
-          time = new Date().getTime() - time;
-          M.UTIL.fire(setting.ajax.success, this, args);
+            beforeSend: function (jqXHR: JQueryXHR, ajaxSetting: JQueryAjaxSettings) {
+              jqXHR.setRequestHeader('X-Preload', 'true');
 
-          var loaded = {};
-          loaded[url] = true;
-          that.stock('loaded', loaded, true);
+              M.UTIL.fire(setting.ajax.beforeSend, this, [jqXHR, ajaxSetting]);
+            },
+            success: function (...args: any[]) {
+              time = new Date().getTime() - time;
+              M.UTIL.fire(setting.ajax.success, this, args);
 
-          if (arguments[2].status === 304 || time <= setting.skip) {
-            setting.volume -= Number(!!setting.volume);
-            setting.timeStamp = 0;
-          }
-          if ('click' === jQuery.data(<Element>event.currentTarget, setting.nss.data)) {
-            that.click_(setting, event);
-          }
-          jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
-        },
-        error: function (...args: any[]) {
-          M.UTIL.fire(setting.ajax.error, this, args);
+              that.loaded_[url] = true;
 
-          setting.volume -= Number(!!setting.volume);
-          setting.timeStamp = 0;
-          jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
-        }
-      });
+              if (arguments[2].status === 304 || time <= setting.skip) {
+                setting.volume -= Number(!!setting.volume);
+                setting.timeStamp = 0;
+              }
+              if ('click' === jQuery.data(<Element>event.currentTarget, setting.nss.data)) {
+                that.click_(setting, event);
+              }
+              jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
+            },
+            error: function (...args: any[]) {
+              M.UTIL.fire(setting.ajax.error, this, args);
+
+              setting.volume -= Number(!!setting.volume);
+              setting.timeStamp = 0;
+              jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
+            }
+          },
+          host && setting.balance.ajax);
       var query: any = setting.query;
       if (query) {
         query = query.split('=');
         query = encodeURIComponent(query[0]) + (query.length > 0 ? '=' + encodeURIComponent(query[1]) : '');
       }
       var url = this.getURL_(setting, <HTMLElement>event.currentTarget);
+      url = host ? url.replace('//[^/]+', '//' + host) : url;
       ajax.url = url.replace(/([^#]+)(#[^\s]*)?$/, '$1' + (query ? (url.match(/\?/) ? '&' : '?') + query : '') + '$2');
       var time = new Date().getTime();
       setting.xhr = jQuery.ajax(ajax);
@@ -232,75 +339,6 @@ module MODULE {
       .done((<any>setting.ajax).done)
       .fail((<any>setting.ajax).fail)
       .always((<any>setting.ajax).always);
-    }
-
-    speed(points: JQueryMouseEventObject[]): number[] {
-      if (points.length < 3) { return []; }
-      var speed1, time1, speed2, time2;
-      time1 = points[0].timeStamp - points[1].timeStamp;
-      speed1 = parseInt(String(Math.pow(points[0].pageX - points[1].pageX, 2) + Math.pow(points[0].pageY - points[1].pageY, 2) / (time1 || 1)), 10);
-      time2 = points[1].timeStamp - points[2].timeStamp;
-      speed2 = parseInt(String(Math.pow(points[1].pageX - points[2].pageX, 2) + Math.pow(points[1].pageY - points[2].pageY, 2) / (time2 || 1)), 10);
-
-      return 1000 > time1 && 1000 > time2 ? [speed1 - speed2, speed1] : [];
-    }
-    check_(event: JQueryMouseEventObject, setting: SettingInterface): void {
-      var url, queue, id, speed;
-      url = this.getURL_(setting, <HTMLElement>event.currentTarget);
-      queue = this.stock('queue');
-      switch (true) {
-        case setting.target !== event.currentTarget:
-        case queue.length > 100:
-        case setting.volume >= setting.limit:
-        case setting.interval ? new Date().getTime() - setting.timeStamp < setting.interval : false:
-        case setting.check ? !!M.UTIL.fire(setting.check, event.currentTarget, [url]) : this.stock('loaded')[url.replace(/#.*/, '')]:
-        case setting.points.length < 3:
-        case setting.points[2].pageX === event.pageX:
-        case (function (speed: number[]) {
-               switch (true) {
-                 case !speed.length:
-                   break;
-                 case -50 > speed[0] && 200 > speed[1]:
-                 case -50 < speed[0] && 50 > speed[0] && -50 < speed[1] && 50 > speed[1]:
-                   return false;
-                 }
-                 return true;
-             })(speed = this.speed(setting.points)):
-          break;
-        default:
-          if (!setting.ajax.crossDomain && (setting.target.protocol !== window.location.protocol || setting.target.host !== window.location.host)) { break; }
-          setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort();
-          var loaded = {};
-          loaded[url.replace(/#.*/, '')] = true;
-          this.stock('loaded', loaded, true);
-          ++setting.volume;
-          setting.timeStamp = event.timeStamp;
-
-          jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data, 'preload');
-
-          if (setting.lock) {
-            jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data, 'lock');
-            jQuery(<HTMLElement>event.currentTarget)
-              .one(setting.nss.click, event => {
-                // `this` is Model instance
-                if (jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data)) {
-                  // Behavior when using the lock
-                  var timer = Math.max(setting.lock - new Date().getTime() + event.data, 0);
-                  jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data, 'click');
-                  if (timer) {
-                    setTimeout(() => {
-                      'click' === jQuery.data(<HTMLElement>event.currentTarget, setting.nss.data) && this.click_(setting, event);
-                      jQuery.removeData(<HTMLElement>event.currentTarget, setting.nss.data);
-                    }, timer);
-                    event.preventDefault();
-                  }
-                }
-              });
-
-              this.preload_(event);
-          }
-          break;
-      }
     }
 
     click_(setting, event): void {
@@ -356,6 +394,7 @@ module MODULE {
       },
 
       trim(text: string): string {
+        text = text || '';
         if (String.prototype.trim) {
           text = text.toString().trim();
         } else {

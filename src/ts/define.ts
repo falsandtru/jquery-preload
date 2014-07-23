@@ -1,4 +1,4 @@
-/// <reference path="type/jquery.d.ts"/>
+/// <reference path=".d/jquery.d.ts"/>
 
 module MODULE {
 
@@ -12,19 +12,21 @@ module MODULE {
     NAME: string
     NAMESPACE: any
     state_: State
+    loaded_: { [index: string]: boolean }
     
     main_(context: ContextInterface, ...args: any[]): ContextInterface
+    
+    drive_(event: JQueryMouseEventObject, setting: SettingInterface): void
+    preload_(event: JQueryMouseEventObject): void
+    check_(event: JQueryMouseEventObject, setting: SettingInterface): void
+    click_(event: JQueryMouseEventObject, setting: SettingInterface): void
+    getURL_(setting: SettingInterface, element: HTMLElement): string
     
     PRELOAD(event: JQueryEventObject): void
     CLICK(event: JQueryMouseEventObject): void
     MOUSEMOVE(event: JQueryMouseEventObject): void
     MOUSEOVER(event: JQueryMouseEventObject): void
     MOUSEOUT(event: JQueryMouseEventObject): void
-
-    preload_(event: JQueryMouseEventObject): void
-    check_(event: JQueryMouseEventObject, setting: SettingInterface): void
-    click_(event: JQueryMouseEventObject, setting: SettingInterface): void
-    getURL_(setting: SettingInterface, element: HTMLElement): string
   }
   // View
   export declare class ViewInterface {
@@ -89,6 +91,10 @@ module MODULE {
     lock: number
     forward?: () => any
     check?: () => any
+    balance: {
+      host?: () => any
+      ajax: JQueryAjaxSettings
+    }
     interval: number
     limit: number
     cooldown: number
@@ -102,7 +108,11 @@ module MODULE {
     view: ViewInterface[]
     target: HTMLAnchorElement
     volume: number
-    points: JQueryMouseEventObject[]
+    points: {
+      pageX: number
+      pageY: number
+      timeStamp: number
+    }[]
     touch: boolean
     xhr: JQueryXHR
     timeStamp: number

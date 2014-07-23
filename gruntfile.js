@@ -5,17 +5,22 @@ module.exports = function (grunt) {
     filename: 'jquery.preload',
 
     typescript: {
+      options: {
+        sourceMap: false,
+        comments: true
+      },
       build: {
         options: {
-          sourceMap: false,
-          comments: false
+          watch: false
         },
-        src: [
-          'src/ts/define.ts',
-          'src/ts/model/*.ts',
-          'src/ts/view/*.ts',
-          'src/ts/controller/*.ts'
-        ],
+        src: 'src/ts/**/*.ts',
+        dest: 'temp/<%= filename %>.js'
+      },
+      watch: {
+        options: {
+          watch: true
+        },
+        src: 'src/ts/**/*.ts',
         dest: 'temp/<%= filename %>.js'
       }
     },
@@ -71,23 +76,6 @@ module.exports = function (grunt) {
       }
     },
 
-    yuidoc: {
-      compile: {
-        name: '<%= pkg.name %>',
-        description: '<%= pkg.description %>',
-        version: '<%= pkg.version %>',
-        url: '<%= pkg.homepage %>',
-        options: {
-          paths: 'dist/raw',
-          //themedir: 'node_modules/grunt-contrib-yuidoc/node_modules/yuidocjs/themes/simple',
-          outdir: 'gh-pages/api',
-          markdown: {
-            sanitize: true
-          }
-        }
-      }
-    },
-
     jekyll: {
       options: {
         bundleExec: true,
@@ -109,15 +97,8 @@ module.exports = function (grunt) {
         nospawn: true
       },
       ts: {
-        options: {
-          interrupt: true
-        },
-        files: ['src/**/*.ts'],
-        tasks: ['typescript', 'concat', 'yuidoc']
-      },
-      cp: {
-        files: ['test/**', 'dist/**'],
-        tasks: ['copy']
+        files: ['temp/**/*.js'],
+        tasks: ['concat']
       },
       jekyll: {
         files: ['gh-pages/**', '!gh-pages/{api,coverage,_site}/**'],
@@ -161,6 +142,9 @@ module.exports = function (grunt) {
         stdout: true,
         stderr: true
       },
+      typescript: {
+        command: 'grunt typescript:watch'
+      },
       watch: {
         command: 'grunt watch'
       },
@@ -181,7 +165,7 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-tslint');
   grunt.loadNpmTasks('grunt-contrib-concat');
   grunt.loadNpmTasks('grunt-contrib-uglify');
-  grunt.loadNpmTasks('grunt-contrib-yuidoc');
+  //grunt.loadNpmTasks('grunt-contrib-yuidoc');
   grunt.loadNpmTasks('grunt-contrib-watch');
   grunt.loadNpmTasks('grunt-contrib-clean');
   grunt.loadNpmTasks('grunt-karma');
@@ -189,9 +173,9 @@ module.exports = function (grunt) {
   grunt.loadNpmTasks('grunt-jekyll');
   grunt.loadNpmTasks('grunt-shell-spawn');
   
-  grunt.registerTask('build', ['typescript', 'concat', 'uglify']);
-  grunt.registerTask('view', ['build', 'shell:watch', 'jekyll:serve']);
-  grunt.registerTask('dev', ['build', 'shell:watch', 'shell:jekyll', 'karma:dev']);
+  grunt.registerTask('build', ['typescript:build', 'concat', 'uglify']);
+  grunt.registerTask('view', ['build', 'shell:typescript', 'shell:watch', 'jekyll:serve']);
+  grunt.registerTask('dev', ['build', 'shell:typescript', 'shell:watch', 'shell:jekyll', 'karma:dev']);
   grunt.registerTask('test', ['build', 'karma:test']);
   grunt.registerTask('travis', ['dist', 'karma:ci']);
   grunt.registerTask('dist', ['clean:dest', 'build', 'clean:temp']);

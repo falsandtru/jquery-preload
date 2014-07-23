@@ -1,4 +1,6 @@
 # preload
+**[Download](https://github.com/falsandtru/jquery.preload.js/releases)**
+
 preloadはユーザーが次に見るページを予測して先読み（事前読み込み）することでページ移動を高速化します。
 
 ## 概要
@@ -138,6 +140,12 @@ $(document).preload();
 
 #### *check: function( url )*
 プリロードを実行するかを戻り値により設定します。コンテキストにプリロードの対象となるDOM要素が与えられます。戻り値が真偽値に変換して真であればすでにプリロード済みであるかにかかわらずプリロードを実行、偽であれば中止します。プリロード済みのページを再度キャッシュしたい場合に有用です。初期値は`null`です。
+
+#### *balance.host: function()*
+リクエスト先のホストを戻り値で設定します。初期値は`''`です。
+
+#### *balance.ajax: function()*
+ロードバランス時のAjax設定を設定します。初期値は`{ beforeSend: null }`です。
 
 #### *interval: Millisecond as numbery*
 プリロードの実行間隔をミリ秒で設定します。初期値は`1000`です。

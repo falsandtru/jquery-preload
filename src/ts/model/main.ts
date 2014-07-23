@@ -1,6 +1,5 @@
 /// <reference path="../define.ts"/>
 /// <reference path="_template.ts"/>
-/// <reference path="worker.ts"/>
 
 /* MODEL */
 
@@ -66,6 +65,7 @@ module MODULE {
           balance: {
             host: '',
             ajax: {
+              crossDomain: true,
               beforeSend: null
             }
           },
@@ -178,14 +178,16 @@ module MODULE {
 
       if (M.state_ !== State.ready) { return; }
 
+      event.timeStamp = new Date().getTime();
       if (!setting.points[0] || 30 < event.timeStamp - setting.points[0].timeStamp) {
-        setting.points.unshift({
-          pageX: event.pageX,
-          pageY: event.pageY,
-          timeStamp: new Date().getTime()
-        });
-        setting.points.splice(3, 10);
-        this.check_(event, setting);
+        //var point = {
+        //  pageX: event.pageX,
+        //  pageY: event.pageY,
+        //  timeStamp: new Date().getTime()
+        //};
+        setting.points.unshift(event);
+        setting.points = setting.points.slice(0, 3);
+        setting.points.length >= 3 && this.check_(event, setting);
       }
     }
     MOUSEOVER(event: JQueryMouseEventObject): void {
@@ -234,19 +236,18 @@ module MODULE {
             }
             this.drive_(event, setting);
           }
-          if (WM.limit) {
+          if (0 && Worker && URL && URL.createObjectURL && Blob) {
             var job;
             job = [
               'var test = ' + this.speed.toString() + ';',
               'onmessage = function(event) {postMessage(test(event.data));self.close();};'
             ];
-            var worker = WM.work(job);
+            var worker = new Worker(URL.createObjectURL(new Blob(job, { type: "text/javascript" })));;
             worker.onmessage = (event) => {
               event.data && check();
               worker.terminate();
             };
             worker.onerror = (event) => {
-              WM.limit = 0;
               worker.terminate();
             };
             worker.postMessage(setting.points);
@@ -393,6 +394,7 @@ module MODULE {
       },
 
       trim(text: string): string {
+        text = text || '';
         if (String.prototype.trim) {
           text = text.toString().trim();
         } else {

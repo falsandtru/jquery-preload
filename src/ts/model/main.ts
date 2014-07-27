@@ -63,7 +63,7 @@ module MODULE {
           forward: null,
           check: null,
           balance: {
-            host: '',
+            host: null,
             ajax: {
               crossDomain: true,
               beforeSend: null

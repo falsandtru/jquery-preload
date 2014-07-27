@@ -1,5 +1,8 @@
 /// <reference path=".d/jquery.d.ts"/>
 
+interface JQueryXHR {
+  host: string
+}
 module MODULE {
 
   export var NAME: string = 'preload';

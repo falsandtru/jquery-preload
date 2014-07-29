@@ -63,7 +63,7 @@ module MODULE {
           forward: null,
           check: null,
           balance: {
-            host: '',
+            host: null,
             ajax: {
               crossDomain: true,
               beforeSend: null
@@ -141,8 +141,10 @@ module MODULE {
         case 'lock':
           if (setting.forward) {
             // forward
-            var url = this.getURL_(setting, <HTMLElement>event.currentTarget);
-            if (false === M.UTIL.fire(setting.forward, null, [event, setting.xhr, setting.timeStamp])) {
+            var url = this.getURL_(setting, <HTMLElement>event.currentTarget),
+                host = setting.xhr.host;
+            delete setting.xhr.host;
+            if (false === M.UTIL.fire(setting.forward, null, [event, setting.xhr, host, setting.timeStamp])) {
               // forward fail
               if ('lock' === jQuery.data(<Element>event.currentTarget, setting.nss.data)) {
                 // lock
@@ -334,6 +336,7 @@ module MODULE {
       ajax.url = url.replace(/([^#]+)(#[^\s]*)?$/, '$1' + (query ? (url.match(/\?/) ? '&' : '?') + query : '') + '$2');
       var time = new Date().getTime();
       setting.xhr = jQuery.ajax(ajax);
+      setting.xhr.host = host;
       jQuery.when &&
       jQuery.when(setting.xhr)
       .done((<any>setting.ajax).done)

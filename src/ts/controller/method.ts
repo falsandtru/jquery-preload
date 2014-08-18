@@ -1,9 +1,12 @@
 /// <reference path="../define.ts"/>
-/// <reference path="../model/main.ts"/>
+/// <reference path="function.ts"/>
 
 /* CONTROLLER */
 
-module MODULE {
+module MODULE.CONTROLLER {
+  var M: ModelInterface
+  var C: ControllerInterface
+
   export class ControllerMethod extends ControllerFunction implements MethodInterface {
 
   }

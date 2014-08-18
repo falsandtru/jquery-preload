@@ -1,10 +1,17 @@
 /// <reference path="../define.ts"/>
-/// <reference path="../model/main.ts"/>
 
 /* CONTROLLER */
 
-module MODULE {
+module MODULE.CONTROLLER {
+  var M: ModelInterface
+  var C: ControllerInterface
+
   export class ControllerFunction implements FunctionInterface {
+
+    constructor(controller: ControllerInterface, model: ModelInterface) {
+      M = model;
+      C = controller;
+    }
 
     enable(): any {
       M.state_ = State.ready;
@@ -15,5 +22,6 @@ module MODULE {
       M.state_ = State.lock;
       return this;
     }
+
   }
 }

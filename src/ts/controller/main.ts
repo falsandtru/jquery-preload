@@ -1,28 +1,29 @@
 /// <reference path="../define.ts"/>
-/// <reference path="../model/main.ts"/>
 /// <reference path="_template.ts"/>
-/// <reference path="function.ts"/>
-/// <reference path="method.ts"/>
 
 /* CONTROLLER */
 
-module MODULE {
-  export class ControllerMain extends ControllerTemplate implements ControllerInterface {
+module MODULE.CONTROLLER {
+  export class Main extends Template implements ControllerInterface {
+
+    constructor(public model_: ModelInterface) {
+      super(model_);
+    }
 
     PRELOAD(event: JQueryEventObject): void {
-      M.PRELOAD(event);
+      this.model_.PRELOAD(event);
     }
     CLICK(event: JQueryMouseEventObject): void {
-      M.CLICK(event);
+      this.model_.CLICK(event);
     }
     MOUSEMOVE(event: JQueryMouseEventObject): void {
-      M.MOUSEMOVE(event);
+      this.model_.MOUSEMOVE(event);
     }
     MOUSEOVER(event: JQueryMouseEventObject): void {
-      M.MOUSEOVER(event);
+      this.model_.MOUSEOVER(event);
     }
     MOUSEOUT(event: JQueryMouseEventObject): void {
-      M.MOUSEOUT(event);
+      this.model_.MOUSEOUT(event);
     }
 
     // CONTROLLERが監視する内部イベントを登録
@@ -42,7 +43,5 @@ module MODULE {
     HANDLERS = { }
 
   }
-  // 短縮登録
-  export var Controller = ControllerMain;
-  export var C = new Controller();
+
 }

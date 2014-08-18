@@ -8,12 +8,9 @@ module MODULE {
   export var NAME: string = 'preload';
   export var NAMESPACE: any = jQuery;
 
-  // クラス設計
   // Model
-  export declare class ModelInterface {
+  export declare class ModelInterface extends StockInterface {
     constructor()
-    NAME: string
-    NAMESPACE: any
     state_: State
     loaded_: { [index: string]: boolean }
     
@@ -31,9 +28,12 @@ module MODULE {
     MOUSEOVER(event: JQueryMouseEventObject): void
     MOUSEOUT(event: JQueryMouseEventObject): void
   }
+  export declare class StockInterface {
+    stock(key?: string, value?: any, merge?: boolean): any
+    stock(key?: Object): any
+  }
   // View
   export declare class ViewInterface {
-    constructor(context?: ContextInterface)
     CONTEXT: ContextInterface
     state_: State
 
@@ -42,8 +42,8 @@ module MODULE {
 
     RESET(setting: SettingInterface): ViewInterface
 
-    OBSERVE(): ViewInterface
-    RELEASE(): ViewInterface
+    OBSERVE(uuid: string): ViewInterface
+    RELEASE(uuid: string): ViewInterface
   }
   // Controller
   export declare class ControllerInterface {
@@ -126,5 +126,12 @@ module MODULE {
   export interface ContextInterface extends JQuery {
     uuid?: string
   }
-
+  
+  export var GEN_UUID: () => string = function () {
+    // version 4
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+      var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16).toUpperCase();
+    });
+  }
 }

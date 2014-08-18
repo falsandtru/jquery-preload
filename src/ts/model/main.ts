@@ -181,7 +181,7 @@ module MODULE {
       if (M.state_ !== State.ready) { return; }
 
       event.timeStamp = new Date().getTime();
-      if (!setting.points[0] || 30 < event.timeStamp - setting.points[0].timeStamp) {
+      if (!setting.points.length || 30 < event.timeStamp - setting.points[0].timeStamp) {
         //var point = {
         //  pageX: event.pageX,
         //  pageY: event.pageY,
@@ -348,7 +348,7 @@ module MODULE {
       var target = event.currentTarget;
       setting.xhr && setting.xhr.readyState < 4 && setting.xhr.abort();
       jQuery(event.currentTarget).removeData(setting.nss.data);
-      if (jQuery(document).find(event.currentTarget)[0]) {
+      if (jQuery(document).find(event.currentTarget).length) {
         jQuery(document)
         .unbind(setting.nss.click)
         .one(setting.nss.click, (event) => {

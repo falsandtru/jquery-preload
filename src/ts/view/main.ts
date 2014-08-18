@@ -4,42 +4,49 @@
 
 /* VIEW */
 
-module MODULE {
-  export class ViewMain extends ViewTemplate implements ViewInterface {
+module MODULE.VIEW {
+  var C: ControllerInterface
 
-    OBSERVE(): ViewInterface {
+  export class Main extends Template implements ViewInterface {
+
+    constructor(public model_: ModelInterface, public controller_: ControllerInterface, context: ContextInterface, uuid) {
+      super(model_, controller_, context, uuid);
+      C = controller_;
+    }
+
+    OBSERVE(uuid: string): ViewInterface {
+      var setting = this.model_.stock(uuid);
+      this.CONTEXT.bind(setting.nss.event, uuid, this.PRELOAD);
       return this;
     }
-    RELEASE(): ViewInterface {
+    RELEASE(uuid: string): ViewInterface {
+      var setting = this.model_.stock(uuid);
+      this.CONTEXT.unbind(setting.nss.event);
       return this;
     }
 
     //内部イベント
     static EVENTS = {
-      BIND: M.NAME
+      BIND: NAME
     }
 
     // VIEWにする要素を選択/解除する
     BIND(uuid: string, event?: Event): ViewInterface {
-      var setting = M.stock(uuid);
+      var setting = this.model_.stock(uuid);
       this.UNBIND(uuid, event);
-      this.CONTEXT
-      .bind(setting.nss.event, uuid, this.HANDLERS.PRELOAD);
 
       event &&
       this.CONTEXT
       .find(<Element>event.currentTarget).add(this.CONTEXT.filter(<Element>event.currentTarget))
       .find(setting.link).filter(setting.filter)
-      .bind(setting.nss.click, uuid, this.HANDLERS.CLICK)
-      .bind(setting.nss.mouseover, uuid, this.HANDLERS.MOUSEOVER)
-      .bind(setting.nss.mousemove, uuid, this.HANDLERS.MOUSEMOVE)
-      .bind(setting.nss.mouseout, uuid, this.HANDLERS.MOUSEOUT);
+      .bind(setting.nss.click, uuid, this.CLICK)
+      .bind(setting.nss.mouseover, uuid, this.MOUSEOVER)
+      .bind(setting.nss.mousemove, uuid, this.MOUSEMOVE)
+      .bind(setting.nss.mouseout, uuid, this.MOUSEOUT);
       return this;
     }
     UNBIND(uuid: string, event?: Event): ViewInterface {
-      var setting = M.stock(uuid);
-      this.CONTEXT
-        .unbind(setting.nss.event);
+      var setting = this.model_.stock(uuid);
 
       event &&
       this.CONTEXT
@@ -61,26 +68,22 @@ module MODULE {
     static TRIGGERS = { }
 
     // VIEWの待ち受けるイベントに登録されるハンドラ
-    HANDLERS = {
-      PRELOAD(event: JQueryEventObject): void {
-        C.PRELOAD(event);
-      },
-      CLICK(event: JQueryMouseEventObject): void {
-        C.CLICK(event);
-      },
-      MOUSEMOVE(event: JQueryMouseEventObject): void {
-        C.MOUSEMOVE(event);
-      },
-      MOUSEOVER(event: JQueryMouseEventObject): void {
-        C.MOUSEOVER(event);
-      },
-      MOUSEOUT(event: JQueryMouseEventObject): void {
-        C.MOUSEOUT(event);
-      }
+    PRELOAD(event: JQueryEventObject): void {
+      C.PRELOAD(event);
+    }
+    CLICK(event: JQueryMouseEventObject): void {
+      C.CLICK(event);
+    }
+    MOUSEMOVE(event: JQueryMouseEventObject): void {
+      C.MOUSEMOVE(event);
+    }
+    MOUSEOVER(event: JQueryMouseEventObject): void {
+      C.MOUSEOVER(event);
+    }
+    MOUSEOUT(event: JQueryMouseEventObject): void {
+      C.MOUSEOUT(event);
     }
     
   }
-  // 短縮登録
-  export var View = ViewMain;
-  export var V = new View();
+
 }

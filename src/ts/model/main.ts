@@ -1,10 +1,15 @@
 /// <reference path="../define.ts"/>
 /// <reference path="_template.ts"/>
+/// <reference path="utility.ts"/>
+/// <reference path="../view/main.ts"/>
+/// <reference path="../controller/main.ts"/>
 
 /* MODEL */
 
-module MODULE {
-  export class ModelMain extends ModelTemplate implements ModelInterface {
+module MODULE.MODEL {
+  export class Main extends Template implements ModelInterface {
+
+    controller_: ControllerInterface = new CONTROLLER.Main(this)
 
     state_: State
     loaded_: { [index: string]: boolean } = {}
@@ -36,14 +41,14 @@ module MODULE {
         queue: []
       });
 
-      var url: string = setting.encode ? M.UTIL.canonicalizeUrl(window.location.href) : window.location.href;
+      var url: string = setting.encode ? Util.canonicalizeUrl(window.location.href) : window.location.href;
       url = url.replace(/#.*/, '');
       this.loaded_[url] = true;
 
       $context.uuid = setting.uuid;
 
       jQuery(() => {
-        setting.view.push(new View($context).BIND(setting.uuid));
+        setting.view.push(new VIEW.Main(this, this.controller_, $context, setting.uuid));
         setting.view[0].CONTEXT.trigger(setting.nss.event);
         this.state_ = ~this.state_ ? this.state_ : State.ready;
       });
@@ -55,7 +60,7 @@ module MODULE {
     configure(option: any): SettingInterface {
       var setting = jQuery.extend(true, {}, option),
         initial = {
-          gns: M.NAME,
+          gns: NAME,
           ns: null,
           link: 'a:not([target])',
           filter: function () { return /(\/[^.]*|\.html?|\.php)([#?].*)?$/.test(this.href); },
@@ -88,7 +93,7 @@ module MODULE {
           option: option,
         },
         compute = function () {
-          var nsArray = [setting.gns || M.NAME].concat(setting.ns && String(setting.ns).split('.') || []);
+          var nsArray = [setting.gns || NAME].concat(setting.ns && String(setting.ns).split('.') || []);
           return {
             nss: {
               name: setting.ns || '',
@@ -132,7 +137,7 @@ module MODULE {
       var setting: SettingInterface = this.stock(event.data),
           context = event.currentTarget;
 
-      if (M.state_ !== State.ready) { return; }
+      if (this.state_ !== State.ready) { return; }
 
       event.timeStamp = new Date().getTime();
       if (setting.encode) { 'href' in context ? (<HTMLAnchorElement>context).href = this.getURL_(setting, <HTMLElement>context) : (<HTMLImageElement>context).src = this.getURL_(setting, <HTMLElement>context); }
@@ -144,7 +149,7 @@ module MODULE {
             var url = this.getURL_(setting, <HTMLElement>event.currentTarget),
                 host = setting.xhr.host;
             delete setting.xhr.host;
-            if (false === M.UTIL.fire(setting.forward, null, [event, setting.xhr, host, setting.timeStamp])) {
+            if (false === Util.fire(setting.forward, null, [event, setting.xhr, host, setting.timeStamp])) {
               // forward fail
               if ('lock' === jQuery.data(<Element>event.currentTarget, setting.nss.data)) {
                 // lock
@@ -178,7 +183,7 @@ module MODULE {
     MOUSEMOVE(event: JQueryMouseEventObject): void {
       var setting: SettingInterface = this.stock(event.data);
 
-      if (M.state_ !== State.ready) { return; }
+      if (this.state_ !== State.ready) { return; }
 
       event.timeStamp = new Date().getTime();
       if (!setting.points.length || 30 < event.timeStamp - setting.points[0].timeStamp) {
@@ -232,7 +237,7 @@ module MODULE {
             url = url.replace(/#.*/, '');
             switch (true) {
               case setting.target !== event.currentTarget:
-              case setting.check ? !!M.UTIL.fire(setting.check, event.currentTarget, [url]) : this.loaded_[url]:
+              case setting.check ? !!Util.fire(setting.check, event.currentTarget, [url]) : this.loaded_[url]:
               case !setting.ajax.crossDomain && (setting.target.protocol !== window.location.protocol || setting.target.host !== window.location.host):
                 return;
             }
@@ -300,11 +305,11 @@ module MODULE {
             beforeSend: function (jqXHR: JQueryXHR, ajaxSetting: JQueryAjaxSettings) {
               jqXHR.setRequestHeader('X-Preload', 'true');
 
-              M.UTIL.fire(setting.ajax.beforeSend, this, [jqXHR, ajaxSetting]);
+              Util.fire(setting.ajax.beforeSend, this, [jqXHR, ajaxSetting]);
             },
             success: function (...args: any[]) {
               time = new Date().getTime() - time;
-              M.UTIL.fire(setting.ajax.success, this, args);
+              Util.fire(setting.ajax.success, this, args);
 
               that.loaded_[url] = true;
 
@@ -318,7 +323,7 @@ module MODULE {
               jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
             },
             error: function (...args: any[]) {
-              M.UTIL.fire(setting.ajax.error, this, args);
+              Util.fire(setting.ajax.error, this, args);
 
               setting.volume -= Number(!!setting.volume);
               setting.timeStamp = 0;
@@ -353,7 +358,7 @@ module MODULE {
         .unbind(setting.nss.click)
         .one(setting.nss.click, (event) => {
           if (!event.isDefaultPrevented()) {
-            window.location.href = setting.encode ? M.UTIL.canonicalizeUrl(target.href) : target.href;
+            window.location.href = setting.encode ? Util.canonicalizeUrl(target.href) : target.href;
             if (setting.encode) { window.location.href = this.getURL_(setting, <HTMLElement>event.currentTarget); }
           }
         });
@@ -375,51 +380,9 @@ module MODULE {
           url = (<HTMLImageElement>element).src;
           break;
       }
-      return setting.encode ? M.UTIL.canonicalizeUrl(url) : url;
-    }
-
-    UTIL = {
-      canonicalizeUrl(url: string): string {
-        var ret;
-        // Trim
-        ret = this.trim(url);
-        // Remove string starting with an invalid character
-        ret = ret.replace(/["`^|\\<>{}\[\]\s].*/, '');
-        // Deny value beginning with the string of HTTP(S) other than
-        ret = /^https?:/i.test(ret) ? ret : (function (url, a) { a.href = url; return a.href; })(ret, document.createElement('a'));
-        // Unify to UTF-8 encoded values
-        ret = encodeURI(decodeURI(ret));
-        // Fix case
-        ret = ret.replace(/(?:%\w{2})+/g, function (str) {
-          return url.match(str.toLowerCase()) || str;
-        });
-        return ret;
-      },
-
-      trim(text: string): string {
-        text = text || '';
-        if (String.prototype.trim) {
-          text = text.toString().trim();
-        } else {
-          if (text = String(text).replace(/^[\s\uFEFF\xA0]+/, '')) {
-            for (var i = text.length; --i;) {
-              if (/[^\s\uFEFF\xA0]/.test(text.charAt(i))) {
-                text = text.substring(0, i + 1);
-                break;
-              }
-            }
-          }
-        }
-        return text;
-      },
-
-      fire(fn: any, context: Object = window, args: any[]= [], async: boolean = false): any {
-        if (typeof fn === 'function') { return async ? setTimeout(function () { fn.apply(context || window, args) }, 0) : fn.apply(context || window, args); } else { return fn; }
-      }
+      return setting.encode ? Util.canonicalizeUrl(url) : url;
     }
 
   }
-  // 短縮登録
-  export var Model = ModelMain;
-  export var M = new Model();
+
 }

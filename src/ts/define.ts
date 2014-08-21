@@ -134,4 +134,5 @@ module MODULE {
       return v.toString(16).toUpperCase();
     });
   }
+
 }

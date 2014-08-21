@@ -41,7 +41,7 @@ module MODULE.MODEL {
         queue: []
       });
 
-      var url: string = setting.encode ? Util.canonicalizeUrl(window.location.href) : window.location.href;
+      var url: string = setting.encode ? Util.normalizeUrl(window.location.href) : window.location.href;
       url = url.replace(/#.*/, '');
       this.loaded_[url] = true;
 
@@ -358,7 +358,7 @@ module MODULE.MODEL {
         .unbind(setting.nss.click)
         .one(setting.nss.click, (event) => {
           if (!event.isDefaultPrevented()) {
-            window.location.href = setting.encode ? Util.canonicalizeUrl(target.href) : target.href;
+            window.location.href = setting.encode ? Util.normalizeUrl(target.href) : target.href;
             if (setting.encode) { window.location.href = this.getURL_(setting, <HTMLElement>event.currentTarget); }
           }
         });
@@ -380,7 +380,7 @@ module MODULE.MODEL {
           url = (<HTMLImageElement>element).src;
           break;
       }
-      return setting.encode ? Util.canonicalizeUrl(url) : url;
+      return setting.encode ? Util.normalizeUrl(url) : url;
     }
 
   }

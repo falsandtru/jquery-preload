@@ -63,7 +63,7 @@ module MODULE.MODEL {
           gns: NAME,
           ns: null,
           link: 'a:not([target])',
-          filter: function () { return /(\/[^.]*|\.html?|\.php)([#?].*)?$/.test(this.href); },
+          filter: function () { return /^https?:/.test(this.href) && /(\/[^.]*|\.html?|\.php)$/.test('/' + this.pathname); },
           lock: 1000,
           forward: null,
           check: null,

@@ -22,7 +22,7 @@ $.preload();
 * カーソルがリンク上にあるときのみ予測を行うため軽量です。
 * プリロード数の上限と時間経過による回復を設定できます。
 * プリロードの完了までページ移動を待機することができます。
-* <a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>と組み合わせて使用できます。
+* <a href="https://github.com/falsandtru/jquery-pjax">pjax</a>と組み合わせて使用できます。
 
 ## 対応
 
@@ -32,7 +32,7 @@ $.preload();
 * プリロード数の時間回復
 * プリロードの実行間隔の設定
 * プリロード中のリンクのロック
-* <a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>との連携。
+* <a href="https://github.com/falsandtru/jquery-pjax">pjax</a>との連携。
 
 ## preload + pjax
 GoogleやAmazonが示すように、ページのロードタイムを1秒前後にまで改善したあとさらに短くする0.1秒には莫大な価値があります。preloadとpjaxはこの価値を約0.5秒分提供します。
@@ -49,7 +49,7 @@ preloadとpjaxの複合利用は、スクリプトファイルを置くだけで
 ※jQuery1.6+
 ※Windows7+Chrome
 
-通常はリンクのクリックからHTMLファイルのダウンロード完了まで0.5～1秒、ページの表示（DOMロード）にさらに1秒の合計2秒前後かかるページ移動をpreload+pjaxではクリックからページの表示まで0.5秒（500ミリ秒）前後で完了することができます。詳細な設定項目は<a href="https://github.com/falsandtru/jquery.preload.js">preload</a>と<a href="https://github.com/falsandtru/jquery.pjax.js">pjax</a>の各ドキュメントに記載しています。PCでは多分これが一番速いと思います。
+通常はリンクのクリックからHTMLファイルのダウンロード完了まで0.5～1秒、ページの表示（DOMロード）にさらに1秒の合計2秒前後かかるページ移動をpreload+pjaxではクリックからページの表示まで0.5秒（500ミリ秒）前後で完了することができます。詳細な設定項目は<a href="https://github.com/falsandtru/jquery-preload">preload</a>と<a href="https://github.com/falsandtru/jquery-pjax">pjax</a>の各ドキュメントに記載しています。PCでは多分これが一番速いと思います。
 
 |パターン|HTMLダウンロード|DOMロード|合計|
 |:---|:--:|:--:|:--:|
@@ -65,8 +65,8 @@ jQueryとスクリプトを3つ追加するだけで動作します。
 <script charset="utf-8" src="/lib/accelerate.js"></script>
 ```
 
-preload: [https://github.com/falsandtru/jquery.preload.js](https://github.com/falsandtru/jquery.preload.js)  
-pjax: [https://github.com/falsandtru/jquery.pjax.js](https://github.com/falsandtru/jquery.pjax.js)
+preload: [https://github.com/falsandtru/jquery-preload](https://github.com/falsandtru/jquery-preload)  
+pjax: [https://github.com/falsandtru/jquery-pjax](https://github.com/falsandtru/jquery-pjax)
 
 ```javascript
 // accelerate.js
@@ -158,7 +158,7 @@ $(document).preload();
 プリロードによるリクエストURLに加えるパラメータを設定します。初期値は`null`です。
 
 #### *encode: Switch as boolean*
-パーセントエンコードしたURLをプリロードに使用しリンクも書き換えるかを設定します。falsandtru/jquery.pjax.jsと連携させる場合は`true`を設定してください。初期値は`false`です。
+パーセントエンコードしたURLをプリロードに使用しリンクも書き換えるかを設定します。falsandtru/jquery-pjaxと連携させる場合は`true`を設定してください。初期値は`false`です。
 
 #### *ajax: object*
 プリロード時で実行される`$.ajax()`に与えるパラメータを設定します。初期値は`{ async: true, timeout: 1500 }`です。

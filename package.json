@@ -1,14 +1,14 @@
 {
-  "name": "jquery.preload.js",
+  "name": "jquery-preload",
   "version": "0.7.1",
   "description": "",
   "repository": {
     "type": "git",
-    "url": "git://github.com/falsandtru/jquery.preload.js.git"
+    "url": "git://github.com/falsandtru/jquery-preload.git"
   },
-  "homepage": "https://github.com/falsandtru/jquery.preload.js/",
+  "homepage": "https://github.com/falsandtru/jquery-preload",
   "bugs": {
-    "url": "https://github.com/falsandtru/jquery.preload.js/issues"
+    "url": "https://github.com/falsandtru/jquery-preload/issues"
   },
   "devDependencies": {
     "chai": "^1.9.1",

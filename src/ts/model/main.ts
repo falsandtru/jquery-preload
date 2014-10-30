@@ -332,13 +332,19 @@ module MODULE.MODEL {
           },
           host && setting.balance.ajax);
       var query: any = setting.query;
-      if (query) {
-        query = query.split('=');
-        query = encodeURIComponent(query[0]) + (query.length > 0 ? '=' + encodeURIComponent(query[1]) : '');
+      switch (query && typeof query) {
+        case 'string':
+          query = eval('({' + query.match(/[^?=&]+=[^&]*/g).join('&').replace(/"/g, '\\"').replace(/([^?=&]+)=([^&]*)/g, '"$1": "$2"').replace(/&/g, ',') + '})');
+        case 'object':
+          query = jQuery.param(query);
+          break;
+        default:
+          query = '';
       }
       var url = this.getURL_(setting, <HTMLElement>event.currentTarget);
       url = host ? url.replace('//[^/]+', '//' + host) : url;
-      ajax.url = url.replace(/([^#]+)(#[^\s]*)?$/, '$1' + (query ? (url.match(/\?/) ? '&' : '?') + query : '') + '$2');
+      url = query ? url.replace(/([^\?#]+)\??([^#]*)?(#.+)?/, '$1$2&' + query + '$3').replace(/\?&/, '?') : url;
+      ajax.url = url;
       var time = new Date().getTime();
       setting.xhr = jQuery.ajax(ajax);
       setting.xhr.host = host;

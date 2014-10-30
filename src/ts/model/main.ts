@@ -1,12 +1,15 @@
 /// <reference path="../define.ts"/>
 /// <reference path="_template.ts"/>
-/// <reference path="utility.ts"/>
+/// <reference path="../library/utility.ts"/>
 /// <reference path="../view/main.ts"/>
 /// <reference path="../controller/main.ts"/>
 
 /* MODEL */
 
 module MODULE.MODEL {
+
+  var Util = LIBRARY.Utility
+
   export class Main extends Template implements ModelInterface {
 
     controller_: ControllerInterface = new CONTROLLER.Main(this)
@@ -307,9 +310,9 @@ module MODULE.MODEL {
 
               Util.fire(setting.ajax.beforeSend, this, [jqXHR, ajaxSetting]);
             },
-            success: function (...args: any[]) {
+            success: function () {
               time = new Date().getTime() - time;
-              Util.fire(setting.ajax.success, this, args);
+              Util.fire(setting.ajax.success, this, arguments);
 
               that.loaded_[url] = true;
 
@@ -322,31 +325,35 @@ module MODULE.MODEL {
               }
               jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
             },
-            error: function (...args: any[]) {
-              Util.fire(setting.ajax.error, this, args);
+            error: function () {
+              Util.fire(setting.ajax.error, this, arguments);
 
               setting.volume -= Number(!!setting.volume);
               setting.timeStamp = 0;
               jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
+            },
+            complete: function () {
+              Util.fire(setting.ajax.complete, this, arguments);
             }
           },
           host && setting.balance.ajax);
       var query: any = setting.query;
-      if (query) {
-        query = query.split('=');
-        query = encodeURIComponent(query[0]) + (query.length > 0 ? '=' + encodeURIComponent(query[1]) : '');
+      switch (query && typeof query) {
+        case 'string':
+          query = eval('({' + query.match(/[^?=&]+=[^&]*/g).join('&').replace(/"/g, '\\"').replace(/([^?=&]+)=([^&]*)/g, '"$1": "$2"').replace(/&/g, ',') + '})');
+        case 'object':
+          query = jQuery.param(query);
+          break;
+        default:
+          query = '';
       }
       var url = this.getURL_(setting, <HTMLElement>event.currentTarget);
       url = host ? url.replace('//[^/]+', '//' + host) : url;
-      ajax.url = url.replace(/([^#]+)(#[^\s]*)?$/, '$1' + (query ? (url.match(/\?/) ? '&' : '?') + query : '') + '$2');
+      url = query ? url.replace(/([^\?#]+)\??([^#]*)?(#.+)?/, '$1$2&' + query + '$3').replace(/\?&/, '?') : url;
+      ajax.url = url;
       var time = new Date().getTime();
       setting.xhr = jQuery.ajax(ajax);
       setting.xhr.host = host;
-      jQuery.when &&
-      jQuery.when(setting.xhr)
-      .done((<any>setting.ajax).done)
-      .fail((<any>setting.ajax).fail)
-      .always((<any>setting.ajax).always);
     }
 
     click_(setting, event): void {

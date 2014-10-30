@@ -76,20 +76,19 @@ if (!/touch|tablet|mobile|phone|android|iphone|ipad|blackberry/i.test(window.nav
     check: $.pjax.getCache,
     encode: true,
     ajax: {
-      done: function ( data, textStatus, XMLHttpRequest ) {
+      success: function ( data, textStatus, XMLHttpRequest ) {
         !$.pjax.getCache( this.url ) && $.pjax.setCache( this.url, null, textStatus, XMLHttpRequest );
       }
     }
   });
-  
+
   $.pjax({
     area: 'body',
     load: { css: true, script: true },
     cache: { click: true, submit: false, popstate: true },
-    server: { query: null },
     speedcheck: true
   });
-  
+
   $(document).bind('pjax.ready', function() {$(document).trigger('preload');});
 }
 ```

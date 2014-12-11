@@ -164,6 +164,7 @@ module MODULE.MODEL {
               }
             } else {
               // forward success
+              setting.xhr = null;
               event.preventDefault();
               jQuery.removeData(<Element>event.currentTarget, setting.nss.data);
             }

@@ -92,7 +92,7 @@ GEM
     jekyll-sass-converter (1.2.0)
       sass (~> 3.2)
     jekyll-sitemap (0.6.0)
-    jekyll-watch (1.1.2)
+    jekyll-watch (1.2.0)
       listen (~> 2.7)
     jemoji (0.3.0)
       gemoji (~> 2.0)
